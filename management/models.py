@@ -9,7 +9,7 @@ from decimal import Decimal
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-    phone = model.CharField(max_lenght=20, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
 
 
 class Company(models.Model):

@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "management.apps.ManagementConfig",
+    "checklist.apps.ChecklistConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -126,4 +128,4 @@ MAILERS = {
     },
 }
 
-AUTH_USER_MODEL = "accounts.CustomUser"
+AUTH_USER_MODEL = "management.CustomUser"
