@@ -58,8 +58,8 @@ class Estate(models.Model):
     mini_markets = models.PositiveIntegerField(default=0, verbose_name="Mini-mercados")
 
     class Meta:
-        verbose_name = "Residencial"
-        verbose_name_plural = "Residenciais"
+        verbose_name = "Empreendimento"
+        verbose_name_plural = "Empreendimentos"
 
     def __str__(self):
         return self.name
@@ -67,7 +67,7 @@ class Estate(models.Model):
 
 class PaymentTerms(models.Model):
     estate = models.ForeignKey(
-        Estate, on_delete=models.CASCADE, verbose_name="Residencial"
+        Estate, on_delete=models.CASCADE, verbose_name="Empreendimento"
     )
     down_payment = models.DecimalField(
         verbose_name="Sinal",

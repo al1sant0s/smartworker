@@ -22,7 +22,7 @@ class CheckList(models.Model):
         UNAVAILABLE = "UNAVAILABLE", _("Indisponível")
 
     estate = models.ForeignKey(
-        Estate, on_delete=models.CASCADE, verbose_name="Residencial"
+        Estate, on_delete=models.CASCADE, verbose_name="Empreendimento"
     )
     sources = models.ManyToManyField(Source, verbose_name="Origens")
     date = models.DateField(auto_now=True, verbose_name="Data")
