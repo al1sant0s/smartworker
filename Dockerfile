@@ -5,7 +5,10 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/environment.yml
 RUN micromamba install -y -n base -f /tmp/environment.yml \
     && micromamba clean --all --yes
 
-ENV PYTHONUNBUFFERED=1 \
+# Coloca o ambiente no PATH para que "docker compose exec web python ..." funcione
+# (o exec não passa pelo entrypoint que ativa o ambiente)
+ENV PATH=/opt/conda/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
