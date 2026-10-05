@@ -1,0 +1,13 @@
+name: smartworker
+channels:
+  - conda-forge
+dependencies:
+  - python=3.14
+  - django=6.1
+  - django-phonenumber-field=8.5
+  - phonenumbers=9.0
+  - psycopg=3.3
+  - pandas=3.0
+  - pdfplumber=0.11
+  - gunicorn=26.2
+  - whitenoise=6.12

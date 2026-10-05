@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.env.*
+**/__pycache__
+*.py[cod]
+db.sqlite3
+*.db
+Dockerfile
+compose.yaml
+.dockerignore
+staticfiles/
