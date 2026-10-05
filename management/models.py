@@ -82,12 +82,14 @@ class Facility(models.Model):
         verbose_name_plural = "Estruturas / Comodidades"
         ordering = ["name"]
 
-    def save(self, *args, **kwargs):
+    def clean(self):
+        super().clean()
+        if not self.name:
+            return
         # 1. Limpa espaços nas extremidades e converte para minúsculo
         cleaned = self.name.strip().lower()
         # 2. Converte espaços e hífens repetidos em um único underscore
         self.name = re.sub(r"[\s-]+", "_", cleaned)
-        super().save(*args, **kwargs)
 
     @property
     def display_name(self):
