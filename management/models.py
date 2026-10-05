@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.core import validators
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
@@ -168,7 +167,7 @@ class PaymentTerms(models.Model):
         Estate, on_delete=models.CASCADE, verbose_name="Empreendimento"
     )
     down_payment = models.DecimalField(
-        verbose_name="Sinal",
+        verbose_name="Sinal (%)",
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -178,7 +177,7 @@ class PaymentTerms(models.Model):
         ],
     )
     key_payment = models.DecimalField(
-        verbose_name="Chaves ou habite-se",
+        verbose_name="Chaves ou habite-se (%)",
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -198,7 +197,7 @@ class PaymentTerms(models.Model):
         ],
     )
     monthly_installments = models.PositiveIntegerField(
-        verbose_name="Mensais (parcelas)"
+        default=0, verbose_name="Mensais (parcelas)"
     )
     balloon_payment = models.DecimalField(
         verbose_name="Intercaladas (%)",
@@ -211,9 +210,49 @@ class PaymentTerms(models.Model):
         ],
     )
     balloon_installments = models.PositiveIntegerField(
-        verbose_name="Intercaladas (parcelas)"
+        default=0, verbose_name="Intercaladas (parcelas)"
     )
 
     class Meta:
         verbose_name = "Condição de pagamento"
         verbose_name_plural = "Condições de pagamento"
+
+    def clean(self):
+        super().clean()
+        percentages = [
+            self.down_payment,
+            self.key_payment,
+            self.monthly_payment,
+            self.balloon_payment,
+        ]
+        # Algum campo inválido já gerou erro próprio em clean_fields()
+        if None in percentages:
+            return
+
+        errors = {}
+        total = sum(percentages)
+        if total != Decimal("100.00"):
+            errors["__all__"] = f"A soma dos percentuais deve ser 100% (atual: {total}%)."
+
+        # Percentual e número de parcelas precisam ser coerentes
+        for pct, qty, label in [
+            ("monthly_payment", "monthly_installments", "mensais"),
+            ("balloon_payment", "balloon_installments", "intercaladas"),
+        ]:
+            has_pct = getattr(self, pct) > 0
+            has_qty = (getattr(self, qty) or 0) > 0
+            if has_pct and not has_qty:
+                errors[qty] = f"Informe o número de parcelas {label}."
+            elif has_qty and not has_pct:
+                errors[pct] = f"Informe o percentual das parcelas {label}."
+
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self):
+        return (
+            f"{self.estate}: sinal {self.down_payment}% · "
+            f"chaves {self.key_payment}% · "
+            f"{self.monthly_installments}x mensais ({self.monthly_payment}%) · "
+            f"{self.balloon_installments}x intercaladas ({self.balloon_payment}%)"
+        )
