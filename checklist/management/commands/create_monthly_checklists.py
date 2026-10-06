@@ -8,7 +8,7 @@ from management.models import Estate
 
 
 class Command(BaseCommand):
-    help = "Cria um checklist pendente do mês para cada empreendimento que ainda não tem um."
+    help = "Cria um checklist pendente do mês para cada empreendimento ativo que ainda não tem um."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         existing = CheckList.objects.filter(reference_month=reference_month).values(
             "estate_id"
         )
-        estates = Estate.objects.exclude(id__in=existing)
+        estates = Estate.objects.tracked().exclude(id__in=existing)
         created = CheckList.objects.bulk_create(
             [CheckList(estate=e, reference_month=reference_month) for e in estates],
             ignore_conflicts=True,

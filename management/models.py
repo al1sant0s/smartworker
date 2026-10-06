@@ -1,10 +1,13 @@
 import re
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import OuterRef, Subquery
+from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -99,6 +102,19 @@ class Facility(models.Model):
         return self.display_name
 
 
+class EstateQuerySet(models.QuerySet):
+    def with_tracking_status(self):
+        """Anota cada empreendimento com a situação do evento mais recente."""
+        latest = TrackingEvent.objects.filter(estate=OuterRef("pk"))
+        return self.annotate(current_status=Subquery(latest.values("status")[:1]))
+
+    def tracked(self):
+        """Empreendimentos que devem receber checklists mensais."""
+        return self.with_tracking_status().filter(
+            current_status=TrackingEvent.Status.ACTIVE
+        )
+
+
 class Estate(models.Model):
     """Modelo do Empreendimento"""
 
@@ -130,8 +146,77 @@ class Estate(models.Model):
         verbose_name = "Empreendimento"
         verbose_name_plural = "Empreendimentos"
 
+    objects = EstateQuerySet.as_manager()
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+        if is_new:
+            # Todo empreendimento começa com um evento, então sempre há uma situação atual
+            TrackingEvent.objects.create(
+                estate=self,
+                status=TrackingEvent.Status.ACTIVE,
+                note="Empreendimento cadastrado",
+            )
+
+    @property
+    def tracking_status(self):
+        # Usa a anotação quando disponível (listas), senão consulta o último evento
+        if hasattr(self, "current_status"):
+            return self.current_status
+        return self.tracking_events.first().status
+
     def __str__(self):
         return self.name
+
+
+class TrackingEvent(models.Model):
+    """Mudança na situação de acompanhamento de um empreendimento (ex: esgotado, distrato)."""
+
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", "Ativo"
+        SOLD_OUT = "SOLD_OUT", "Esgotado"
+        CANCELLED = "CANCELLED", "Cancelado"
+        PAUSED = "PAUSED", "Pausado"
+
+    estate = models.ForeignKey(
+        Estate,
+        on_delete=models.CASCADE,
+        related_name="tracking_events",
+        verbose_name="Empreendimento",
+    )
+    status = models.CharField(
+        max_length=16, choices=Status, verbose_name="Nova situação"
+    )
+    date = models.DateField(default=timezone.localdate, verbose_name="Data")
+    note = models.TextField(blank=True, default="", verbose_name="Observação")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name="Registrado por",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Registrado em")
+
+    class Meta:
+        verbose_name = "Evento de acompanhamento"
+        verbose_name_plural = "Eventos de acompanhamento"
+        # O primeiro da lista é sempre a situação atual
+        ordering = ["-date", "-created_at"]
+
+    def clean(self):
+        super().clean()
+        if not self.estate_id or not self.status:
+            return
+        previous = self.estate.tracking_events.exclude(pk=self.pk).first()
+        if previous and previous.status == self.status:
+            raise ValidationError(
+                {"status": f"O empreendimento já está com a situação “{self.get_status_display()}”."}
+            )
+
+    def __str__(self):
+        return f"{self.estate}: {self.get_status_display()} em {self.date:%d/%m/%Y}"
 
 
 class EstateFacility(models.Model):
