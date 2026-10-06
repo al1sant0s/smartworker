@@ -13,6 +13,7 @@ dependencies:
   - whitenoise=6.12
   - django-environ=0.14
   - pillow=12.3
+  - django-cleanup=9.0
   - pip
   - pip:
       # Não disponível no conda-forge

@@ -1,7 +1,12 @@
+from pathlib import Path
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
+from PIL import Image
 
 from management.models import Company, Estate
 
@@ -12,7 +17,10 @@ class SourceHyperLink(models.Model):
     )
     # Empreendimentos que usam esta fonte (acessível via estate.source_hyperlinks)
     estates = models.ManyToManyField(
-        Estate, blank=True, related_name="source_hyperlinks", verbose_name="Empreendimentos"
+        Estate,
+        blank=True,
+        related_name="source_hyperlinks",
+        verbose_name="Empreendimentos",
     )
     url = models.URLField(max_length=500, unique=True, verbose_name="URL")
     description = models.TextField(blank=True, default="", verbose_name="Descrição")
@@ -108,3 +116,59 @@ class CheckList(models.Model):
 
     def __str__(self):
         return f"{self.estate} - {self.reference_month:%m/%Y}"
+
+
+# Apenas formatos abertos, para facilitar o uso dos arquivos por outros programas.
+# Formatos proprietários (doc, xlsx...) devem ser convertidos (pdf, csv...) antes do envio.
+DOCUMENT_EXTENSIONS = ["pdf", "txt", "csv", "odt", "ods"]
+IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif"]
+
+
+def availability_sheet_path(instance, filename):
+    # Ex: checklists/12/2026-10/tabela-precos.pdf
+    checklist = instance.checklist
+    return f"checklists/{checklist.estate_id}/{checklist.reference_month:%Y-%m}/{filename}"
+
+
+class AvailabilitySheet(models.Model):
+    """Arquivo (tabela de preços/disponibilidade) enviado para um checklist."""
+
+    checklist = models.ForeignKey(
+        "CheckList",
+        on_delete=models.CASCADE,
+        related_name="sheets",
+        verbose_name="Checklist",
+    )
+    file = models.FileField(
+        "Arquivo",
+        upload_to=availability_sheet_path,
+        validators=[
+            FileExtensionValidator(DOCUMENT_EXTENSIONS + IMAGE_EXTENSIONS)
+        ],
+        help_text="Formatos aceitos: " + ", ".join(DOCUMENT_EXTENSIONS + IMAGE_EXTENSIONS),
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Enviado em")
+
+    class Meta:
+        verbose_name = "Tabela de preços"
+        verbose_name_plural = "Tabelas de preços"
+        ordering = ["-uploaded_at"]
+
+    def clean(self):
+        super().clean()
+        # A extensão sozinha não garante o conteúdo: confere se imagens abrem de fato
+        if self.file and self.extension in IMAGE_EXTENSIONS:
+            try:
+                self.file.seek(0)
+                Image.open(self.file).verify()
+            except Exception:
+                raise ValidationError({"file": "O arquivo não é uma imagem válida."})
+            finally:
+                self.file.seek(0)
+
+    @property
+    def extension(self):
+        return Path(self.file.name).suffix.lower().lstrip(".")
+
+    def __str__(self):
+        return Path(self.file.name).name

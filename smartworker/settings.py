@@ -61,6 +61,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-Party Apps
     "phonenumber_field",
+    # Remove os arquivos do disco quando o registro é apagado ou o arquivo trocado
+    "django_cleanup.apps.CleanupConfig",
 ]
 
 MIDDLEWARE = [
