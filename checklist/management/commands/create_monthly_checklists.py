@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from checklist.models import CheckList
-from management.models import Estate
+from management.models import TrackingEvent
 
 
 class Command(BaseCommand):
@@ -29,9 +29,12 @@ class Command(BaseCommand):
         existing = CheckList.objects.filter(reference_month=reference_month).values(
             "estate_id"
         )
-        estates = Estate.objects.tracked().exclude(id__in=existing)
+        events = TrackingEvent.objects.tracked().exclude(estate_id__in=existing)
         created = CheckList.objects.bulk_create(
-            [CheckList(estate=e, reference_month=reference_month) for e in estates],
+            [
+                CheckList(estate_id=event.estate_id, reference_month=reference_month)
+                for event in events
+            ],
             ignore_conflicts=True,
         )
         self.stdout.write(

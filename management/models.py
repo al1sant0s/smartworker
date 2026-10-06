@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import OuterRef, Subquery
+from django.db.models import Max, Subquery
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -102,19 +102,6 @@ class Facility(models.Model):
         return self.display_name
 
 
-class EstateQuerySet(models.QuerySet):
-    def with_tracking_status(self):
-        """Anota cada empreendimento com a situação do evento mais recente."""
-        latest = TrackingEvent.objects.filter(estate=OuterRef("pk"))
-        return self.annotate(current_status=Subquery(latest.values("status")[:1]))
-
-    def tracked(self):
-        """Empreendimentos que devem receber checklists mensais."""
-        return self.with_tracking_status().filter(
-            current_status=TrackingEvent.Status.ACTIVE
-        )
-
-
 class Estate(models.Model):
     """Modelo do Empreendimento"""
 
@@ -146,8 +133,6 @@ class Estate(models.Model):
         verbose_name = "Empreendimento"
         verbose_name_plural = "Empreendimentos"
 
-    objects = EstateQuerySet.as_manager()
-
     def save(self, *args, **kwargs):
         is_new = self._state.adding
         super().save(*args, **kwargs)
@@ -159,15 +144,26 @@ class Estate(models.Model):
                 note="Empreendimento cadastrado",
             )
 
-    @property
-    def tracking_status(self):
-        # Usa a anotação quando disponível (listas), senão consulta o último evento
-        if hasattr(self, "current_status"):
-            return self.current_status
-        return self.tracking_events.first().status
-
     def __str__(self):
         return self.name
+
+
+class TrackingEventQuerySet(models.QuerySet):
+    def latest_per_estate(self):
+        """O evento mais recente (maior pk) de cada empreendimento, ou seja, a situação atual.
+
+        Como eventos não podem ser retroativos, o maior pk é também o de data mais recente.
+        """
+        latest_ids = (
+            TrackingEvent.objects.values("estate")
+            .annotate(last_id=Max("pk"))
+            .values("last_id")
+        )
+        return self.filter(pk__in=Subquery(latest_ids))
+
+    def tracked(self):
+        """Situação atual dos empreendimentos ativos (que recebem checklists mensais)."""
+        return self.latest_per_estate().filter(status=TrackingEvent.Status.ACTIVE)
 
 
 class TrackingEvent(models.Model):
@@ -199,21 +195,46 @@ class TrackingEvent(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Registrado em")
 
+    objects = TrackingEventQuerySet.as_manager()
+
     class Meta:
         verbose_name = "Evento de acompanhamento"
         verbose_name_plural = "Eventos de acompanhamento"
-        # O primeiro da lista é sempre a situação atual
-        ordering = ["-date", "-created_at"]
+        # Ordem de registro; o primeiro da lista é sempre a situação atual
+        ordering = ["-pk"]
 
     def clean(self):
         super().clean()
-        if not self.estate_id or not self.status:
+        if not self.estate_id or not self.status or not self.date:
             return
-        previous = self.estate.tracking_events.exclude(pk=self.pk).first()
-        if previous and previous.status == self.status:
-            raise ValidationError(
-                {"status": f"O empreendimento já está com a situação “{self.get_status_display()}”."}
-            )
+
+        # Eventos vizinhos na ordem de registro (ao editar, ignora o próprio evento)
+        events = self.estate.tracking_events.all()
+        previous = (events.filter(pk__lt=self.pk) if self.pk else events).first()
+        following = events.filter(pk__gt=self.pk).last() if self.pk else None
+
+        errors = {}
+        if previous:
+            if previous.status == self.status:
+                errors["status"] = (
+                    f"O empreendimento já está com a situação “{self.get_status_display()}”."
+                )
+            if self.date < previous.date:
+                errors["date"] = (
+                    "A data não pode ser anterior ao último evento "
+                    f"({previous.date:%d/%m/%Y})."
+                )
+        if following:
+            if following.status == self.status:
+                errors["status"] = (
+                    f"O evento seguinte já tem a situação “{self.get_status_display()}”."
+                )
+            if self.date > following.date:
+                errors["date"] = (
+                    f"A data não pode ser posterior ao evento seguinte ({following.date:%d/%m/%Y})."
+                )
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self):
         return f"{self.estate}: {self.get_status_display()} em {self.date:%d/%m/%Y}"
