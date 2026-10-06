@@ -8,43 +8,58 @@ https://docs.djangoproject.com/en/6.1/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
+
+Os serviços (banco, cache, storages, email) são configurados por URLs,
+interpretadas pelo django-service-urls (carregado em manage.py/wsgi.py/asgi.py).
 """
 
-import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+import environ
+
+# ==============================================================================
+# 1. BASE & ENVIRONMENT SETUP
+# ==============================================================================
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env(
+    DEBUG=(bool, False),
+)
+# Variáveis já definidas no ambiente (ex: pelo Docker Compose) têm prioridade
+environ.Env.read_env(BASE_DIR / ".env")
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-9#(aw*f7w^2#!y#jyu31k&6i4jw9zkpy4zx7yr@jc01zm2f!4#",
+# ==============================================================================
+# 2. SECURITY & NETWORK
+# ==============================================================================
+
+DEBUG = env("DEBUG")
+SECRET_KEY = env("SECRET_KEY")
+
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "::1"])
+
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS", default=["http://localhost:8000", "http://127.0.0.1:8000"]
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = [
-    h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h
-]
-
-
-# Application definition
+# ==============================================================================
+# 3. APPLICATION DEFINITION & CORE ARCHITECTURE
+# ==============================================================================
 
 INSTALLED_APPS = [
+    # Smartworker Apps
     "management.apps.ManagementConfig",
     "checklist.apps.ChecklistConfig",
+    # Django Contrib Apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-Party Apps
     "phonenumber_field",
 ]
 
@@ -61,6 +76,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "smartworker.urls"
+WSGI_APPLICATION = "smartworker.wsgi.application"
 
 TEMPLATES = [
     {
@@ -77,88 +93,58 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "smartworker.wsgi.application"
 
+# ==============================================================================
+# 4. AUTHENTICATION & USER MANAGEMENT
+# ==============================================================================
 
-# Database
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-
-# Usa PostgreSQL quando POSTGRES_HOST estiver definido (ex: no Docker Compose),
-# caso contrário cai no SQLite local
-if os.environ.get("POSTGRES_HOST"):
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ["POSTGRES_DB"],
-            "USER": os.environ["POSTGRES_USER"],
-            "PASSWORD": os.environ["POSTGRES_PASSWORD"],
-            "HOST": os.environ["POSTGRES_HOST"],
-            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
-        }
-    }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
+AUTH_USER_MODEL = "management.CustomUser"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
     },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/6.1/topics/i18n/
+# ==============================================================================
+# 5. SERVICE BACKENDS (DB, CACHE, STORAGE, EMAIL)
+# ==============================================================================
+
+DATABASES = {
+    "default": env("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+}
+
+CACHES = {"default": env("CACHE_URL", default="memory://")}
+
+STORAGES = {
+    "default": env("STORAGE_DEFAULT", default="fs://"),
+    # Troque para "manifest://" quando o nginx passar a servir os estáticos
+    "staticfiles": env("STORAGE_STATICFILES", default="whitenoise+static://"),
+}
+
+MAILERS = {"default": env("MAILER_URL", default="console://")}
+
+
+# ==============================================================================
+# 6. INTERNATIONALIZATION
+# ==============================================================================
 
 LANGUAGE_CODE = "pt-br"
-
-TIME_ZONE = "America/Sao_Paulo"
-
+TIME_ZONE = env("TIME_ZONE", default="America/Sao_Paulo")
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.1/howto/static-files/
+# ==============================================================================
+# 7. STATIC & MEDIA FILES
+# ==============================================================================
 
-STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = env("STATIC_URL", default="static/")
+STATIC_ROOT = env("STATIC_ROOT", default=str(BASE_DIR / "staticfiles"))
 
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
-
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
-MAILERS = {
-    "default": {
-        "BACKEND": "django.core.mail.backends.console.EmailBackend",
-    },
-}
-
-AUTH_USER_MODEL = "management.CustomUser"
+MEDIA_URL = env("MEDIA_URL", default="media/")
+MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media"))

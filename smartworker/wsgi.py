@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/6.1/howto/deployment/wsgi/
 
 import os
 
+import django_service_urls.loads  # interpreta as URLs de serviço do settings
+
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'smartworker.settings')

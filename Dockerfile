@@ -16,7 +16,9 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER . .
 
 # RUN não passa pelo entrypoint, então o ambiente precisa ser ativado aqui
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-RUN python manage.py collectstatic --noinput
+# SECRET_KEY é obrigatória no settings; aqui basta um valor descartável
+RUN SECRET_KEY=build-only python manage.py collectstatic --noinput \
+    && mkdir -p /app/media
 
 EXPOSE 8000
 

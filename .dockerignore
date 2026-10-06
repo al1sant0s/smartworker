@@ -10,3 +10,4 @@ Dockerfile
 compose.yaml
 .dockerignore
 staticfiles/
+media/

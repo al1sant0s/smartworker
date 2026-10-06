@@ -3,6 +3,8 @@
 import os
 import sys
 
+import django_service_urls.loads  # interpreta as URLs de serviço do settings
+
 
 def main():
     """Run administrative tasks."""
