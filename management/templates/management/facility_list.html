@@ -26,8 +26,8 @@
             <tbody>
               {% for facility in facility_list %}
                 <tr>
-                  <td><a href="{% url 'management:facility_update' facility.pk %}">{{ facility.display_name }}</a></td>
-                  <td><code>{{ facility.name }}</code></td>
+                  <td><a href="{% url 'management:facility_update' facility.pk %}">{{ facility.label }}</a></td>
+                  <td><code>{{ facility.slug }}</code></td>
                   <td class="text-end">{{ facility.estate_count }}</td>
                 </tr>
               {% endfor %}

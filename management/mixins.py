@@ -2,6 +2,7 @@ import re
 from functools import reduce
 from operator import or_
 
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Q
 
 
@@ -36,3 +37,17 @@ class SearchMixin:
         context = super().get_context_data(**kwargs)
         context["search_query"] = self.get_search_query()
         return context
+
+
+class StaffRequiredMixin(UserPassesTestMixin):
+    """Restringe a view a membros da equipe (is_staff) e superusuários.
+
+    O login já é exigido para todo o sistema; aqui um usuário comum logado
+    recebe 403 em vez de ser mandado de novo para a tela de login.
+    """
+
+    raise_exception = True
+
+    def test_func(self):
+        user = self.request.user
+        return user.is_staff or user.is_superuser

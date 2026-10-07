@@ -16,7 +16,7 @@ from .forms import (
     PaymentTermsForm,
     TrackingEventForm,
 )
-from .mixins import SearchMixin
+from .mixins import SearchMixin, StaffRequiredMixin
 from .models import City, Company, Estate, Facility, PaymentTerms, State, TrackingEvent
 
 
@@ -61,23 +61,21 @@ class CompanyUpdateView(SuccessMessageMixin, UpdateView):
 
 
 # Estruturas --------------------------------------------------------------------
+# Só a equipe mantém o catálogo; usuários comuns apenas escolhem estruturas no empreendimento
 
 
-class FacilityListView(SearchMixin, ListView):
+class FacilityListView(StaffRequiredMixin, SearchMixin, ListView):
     model = Facility
     paginate_by = 50
-    search_fields = ["name"]
-
-    def get_search_query(self):
-        # O nome é guardado em snake_case: "piscina infantil" busca "piscina" e "infantil"
-        return super().get_search_query().replace("_", " ")
+    # O slug permite buscar sem acento: "natacao" encontra "Natação"
+    search_fields = ["label", "slug"]
 
     def get_queryset(self):
         # Com a agregação o Meta.ordering não vale, então a ordem é explícita
-        return super().get_queryset().annotate(estate_count=Count("estates")).order_by("name")
+        return super().get_queryset().annotate(estate_count=Count("estates")).order_by("label")
 
 
-class FacilityCreateView(SuccessMessageMixin, CreateView):
+class FacilityCreateView(StaffRequiredMixin, SuccessMessageMixin, CreateView):
     model = Facility
     form_class = FacilityForm
     success_url = reverse_lazy("management:facility_list")
@@ -86,7 +84,7 @@ class FacilityCreateView(SuccessMessageMixin, CreateView):
         return f"Estrutura {self.object} cadastrada."
 
 
-class FacilityUpdateView(SuccessMessageMixin, UpdateView):
+class FacilityUpdateView(StaffRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Facility
     form_class = FacilityForm
     success_url = reverse_lazy("management:facility_list")

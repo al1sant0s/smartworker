@@ -79,7 +79,11 @@
               <button type="button" class="btn btn-outline-secondary btn-sm" data-formset-add="facilities">
                 <i class="bi bi-plus-lg me-1"></i>Adicionar estrutura
               </button>
-              <a href="{% url 'management:facility_create' %}" target="_blank" class="small">Estrutura não está na lista? Cadastre aqui</a>
+              {% if user.is_staff or user.is_superuser %}
+                <a href="{% url 'management:facility_create' %}" target="_blank" class="small">Estrutura não está na lista? Cadastre aqui</a>
+              {% else %}
+                <span class="small text-body-secondary">Estrutura não está na lista? Peça a um administrador para cadastrá-la.</span>
+              {% endif %}
             </div>
           </div>
           <div class="card-footer d-flex gap-2">

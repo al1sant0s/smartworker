@@ -125,9 +125,10 @@ class TrackingEventForm(forms.ModelForm):
 class FacilityForm(forms.ModelForm):
     class Meta:
         model = Facility
-        fields = ["name"]
-        labels = {"name": "Nome"}
-        help_texts = {"name": "Ex: Piscina infantil. É guardado como piscina_infantil."}
+        fields = ["label"]
+        help_texts = {
+            "label": "Ex: Sala de musculação. É padronizado e identificado como sala_de_musculacao."
+        }
 
 
 class EstateFacilityForm(forms.ModelForm):
@@ -137,7 +138,7 @@ class EstateFacilityForm(forms.ModelForm):
         widgets = {
             "quantity": forms.NumberInput(attrs={"min": 1}),
             "area": forms.NumberInput(attrs={"step": "0.01", "min": 0}),
-            "floor": forms.TextInput(attrs={"placeholder": "Ex: Térreo, Cobertura"}),
+            "floor": forms.NumberInput(attrs={"step": 1, "placeholder": "0 = térreo"}),
         }
 
 

@@ -37,8 +37,9 @@ class CompanyAdmin(admin.ModelAdmin):
 
 @admin.register(Facility)
 class FacilityAdmin(admin.ModelAdmin):
-    list_display = ["display_name", "name"]
-    search_fields = ["name"]
+    list_display = ["label", "slug"]
+    search_fields = ["label", "slug"]
+    readonly_fields = ["slug"]
 
 
 @admin.register(City)

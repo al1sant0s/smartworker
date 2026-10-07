@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from decimal import Decimal
 
 from django.conf import settings
@@ -80,34 +81,57 @@ class Company(models.Model):
 
 
 class Facility(models.Model):
-    """
-    Cadastra os tipos de estruturas em formato slug/snake_case.
-    Exemplo no banco: 'piscina_infantil', 'salao_de_festas'
+    """Tipo de estrutura, com nome padronizado e identificador ASCII único.
+
+    Ex: "sAlA de  MUSCULAçÃo" vira label "Sala de musculação" e slug "sala_de_musculacao".
+    O slug (sem acentos) é o que garante a unicidade: "Natação" e "natacao" são a mesma.
     """
 
-    name = models.CharField(max_length=64, unique=True, verbose_name="Identificador")
+    label = models.CharField(max_length=64, verbose_name="Nome")
+    slug = models.CharField(
+        max_length=64, unique=True, editable=False, verbose_name="Identificador"
+    )
 
     class Meta:
         verbose_name = "Estrutura / Comodidade"
         verbose_name_plural = "Estruturas / Comodidades"
-        ordering = ["name"]
+        ordering = ["label"]
+
+    @staticmethod
+    def standardize_label(text):
+        """Espaços extras removidos e só a primeira letra maiúscula."""
+        return " ".join(text.split()).capitalize()
+
+    @staticmethod
+    def make_slug(label):
+        """snake_case ASCII: sem acentos ("ç" vira "c") e só letras, números e "_"."""
+        ascii_text = unicodedata.normalize("NFKD", label).encode("ascii", "ignore").decode()
+        return re.sub(r"[^a-z0-9]+", "_", ascii_text.lower()).strip("_")
+
+    def standardize(self):
+        self.label = self.standardize_label(self.label or "")
+        self.slug = self.make_slug(self.label)
 
     def clean(self):
         super().clean()
-        if not self.name:
+        if not self.label:
             return
-        # 1. Limpa espaços nas extremidades e converte para minúsculo
-        cleaned = self.name.strip().lower()
-        # 2. Converte espaços e hífens repetidos em um único underscore
-        self.name = re.sub(r"[\s-]+", "_", cleaned)
+        self.standardize()
+        if not self.slug:
+            raise ValidationError({"label": "O nome precisa ter letras ou números."})
+        # O slug não está no formulário, então o validate_unique do ModelForm não o
+        # confere; a checagem fica aqui para o erro aparecer no campo "Nome"
+        duplicate = Facility.objects.filter(slug=self.slug).exclude(pk=self.pk).first()
+        if duplicate:
+            raise ValidationError({"label": f"Já existe a estrutura “{duplicate.label}”."})
 
-    @property
-    def display_name(self):
-        """Retorna a string formatada para exibição (ex: 'Piscina infantil')"""
-        return self.name.replace("_", " ").capitalize()
+    def save(self, *args, **kwargs):
+        # Também padroniza fora dos formulários (shell, scripts)
+        self.standardize()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.display_name
+        return self.label
 
 
 class State(models.TextChoices):
@@ -375,8 +399,12 @@ class EstateFacility(models.Model):
     area = models.DecimalField(
         max_digits=8, decimal_places=2, blank=True, null=True, verbose_name="Área (m²)"
     )
-    floor = models.CharField(
-        max_length=32, blank=True, null=True, verbose_name="Pavimento / Andar"
+    # 0 = térreo; negativos = subsolos (ex: -1 = 1º subsolo)
+    floor = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Pavimento / Andar",
+        help_text="0 = térreo; negativo = subsolo",
     )
 
     class Meta:
@@ -385,7 +413,7 @@ class EstateFacility(models.Model):
         unique_together = ("estate", "facility")
 
     def __str__(self):
-        return f"{self.facility.display_name} em {self.estate.name}"
+        return f"{self.facility.label} em {self.estate.name}"
 
 
 class PaymentTerms(models.Model):
