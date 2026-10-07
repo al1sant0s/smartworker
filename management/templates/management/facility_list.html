@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Estruturas | Smartworker{% endblock %}
+{% block page_title %}Estruturas{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-header d-flex flex-wrap align-items-center gap-2">
+      <h3 class="card-title mb-0 me-2">{{ page_obj.paginator.count }} estrutura{{ page_obj.paginator.count|pluralize }}</h3>
+      {% include "includes/search_form.html" with placeholder="Nome da estrutura" %}
+      <a href="{% url 'management:facility_create' %}" class="btn btn-primary btn-sm ms-auto">
+        <i class="bi bi-plus-lg me-1"></i>Nova estrutura
+      </a>
+    </div>
+    {% if facility_list %}
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Identificador</th>
+                <th class="text-end">Empreendimentos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for facility in facility_list %}
+                <tr>
+                  <td><a href="{% url 'management:facility_update' facility.pk %}">{{ facility.display_name }}</a></td>
+                  <td><code>{{ facility.name }}</code></td>
+                  <td class="text-end">{{ facility.estate_count }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% if is_paginated %}
+        <div class="card-footer">{% include "includes/pagination.html" %}</div>
+      {% endif %}
+    {% else %}
+      <div class="card-body text-body-secondary">{% if search_query %}Nada encontrado para “{{ search_query }}”.{% else %}Nenhuma estrutura cadastrada.{% endif %}</div>
+    {% endif %}
+  </div>
+{% endblock %}

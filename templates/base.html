@@ -74,6 +74,12 @@
                 <p>Empreendimentos</p>
               </a>
             </li>
+            <li class="nav-item">
+              <a href="{% url 'management:facility_list' %}" class="nav-link{% if namespace == 'management' and 'facility_' in url_name %} active{% endif %}">
+                <i class="nav-icon bi bi-tree"></i>
+                <p>Estruturas</p>
+              </a>
+            </li>
             <li class="nav-header">VERIFICAÇÃO</li>
             <li class="nav-item">
               <a href="{% url 'checklist:checklist_list' %}" class="nav-link{% if namespace == 'checklist' and url_name != 'estate_sources' %} active{% endif %}">

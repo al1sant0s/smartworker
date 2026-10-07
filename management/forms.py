@@ -1,7 +1,16 @@
 from django import forms
 from django.urls import reverse
 
-from .models import City, Company, Estate, State, TrackingEvent
+from .models import (
+    City,
+    Company,
+    Estate,
+    EstateFacility,
+    Facility,
+    PaymentTerms,
+    State,
+    TrackingEvent,
+)
 
 
 class CompanyForm(forms.ModelForm):
@@ -111,3 +120,67 @@ class TrackingEventForm(forms.ModelForm):
             self.fields["status"].choices = [
                 choice for choice in self.fields["status"].choices if choice[0] != current.status
             ]
+
+
+class FacilityForm(forms.ModelForm):
+    class Meta:
+        model = Facility
+        fields = ["name"]
+        labels = {"name": "Nome"}
+        help_texts = {"name": "Ex: Piscina infantil. É guardado como piscina_infantil."}
+
+
+class EstateFacilityForm(forms.ModelForm):
+    class Meta:
+        model = EstateFacility
+        fields = ["facility", "quantity", "area", "floor"]
+        widgets = {
+            "quantity": forms.NumberInput(attrs={"min": 1}),
+            "area": forms.NumberInput(attrs={"step": "0.01", "min": 0}),
+            "floor": forms.TextInput(attrs={"placeholder": "Ex: Térreo, Cobertura"}),
+        }
+
+
+class BaseEstateFacilityFormSet(forms.BaseInlineFormSet):
+    def get_unique_error_message(self, unique_check):
+        return "Cada estrutura só pode aparecer uma vez no empreendimento."
+
+
+# Estruturas do empreendimento, editadas junto com o formulário do empreendimento
+EstateFacilityFormSet = forms.inlineformset_factory(
+    Estate,
+    EstateFacility,
+    form=EstateFacilityForm,
+    formset=BaseEstateFacilityFormSet,
+    extra=0,
+    can_delete=True,
+)
+
+
+class PaymentTermsForm(forms.ModelForm):
+    class Meta:
+        model = PaymentTerms
+        fields = [
+            "down_payment",
+            "key_payment",
+            "monthly_payment",
+            "monthly_installments",
+            "balloon_payment",
+            "balloon_installments",
+        ]
+        widgets = {
+            field: forms.NumberInput(attrs={"step": "0.01", "min": 0, "max": 100})
+            for field in ["down_payment", "key_payment", "monthly_payment", "balloon_payment"]
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Parcelas em branco valem 0; o clean() do modelo cobra quando há percentual
+        for field in ["monthly_installments", "balloon_installments"]:
+            self.fields[field].required = False
+
+    def clean_monthly_installments(self):
+        return self.cleaned_data["monthly_installments"] or 0
+
+    def clean_balloon_installments(self):
+        return self.cleaned_data["balloon_installments"] or 0

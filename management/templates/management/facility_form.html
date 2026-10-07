@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}{{ object }}{% else %}Nova estrutura{% endif %} | Smartworker{% endblock %}
+{% block page_title %}{% if object %}Editar estrutura{% else %}Nova estrutura{% endif %}{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-lg-6 col-xl-4">
+      <div class="card card-primary card-outline">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="card-body">
+            {% include "includes/form_fields.html" %}
+          </div>
+          <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button>
+            <a href="{% url 'management:facility_list' %}" class="btn btn-link">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

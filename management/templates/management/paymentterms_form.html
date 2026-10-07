@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Condição de pagamento · {{ estate.name }} | Smartworker{% endblock %}
+{% block page_title %}{% if object %}Editar condição de pagamento{% else %}Nova condição de pagamento{% endif %}{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card card-primary card-outline">
+        <div class="card-header"><h3 class="card-title mb-0">{{ estate.name }}</h3></div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="card-body">
+            {% include "includes/form_errors.html" %}
+            <p class="text-body-secondary small">Os percentuais devem somar 100%. Mensais e intercaladas precisam do número de parcelas.</p>
+            <div class="row">
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.down_payment %}</div>
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.key_payment %}</div>
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.monthly_payment %}</div>
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.monthly_installments %}</div>
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.balloon_payment %}</div>
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.balloon_installments %}</div>
+            </div>
+          </div>
+          <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button>
+            <a href="{% url 'management:estate_update' estate.pk %}" class="btn btn-link">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

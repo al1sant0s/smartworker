@@ -1,0 +1,7 @@
+{# Resumo de uma condição de pagamento. Uso: include com terms=<PaymentTerms> #}
+<div class="d-flex flex-wrap gap-1">
+  {% if terms.down_payment %}<span class="badge text-bg-light border">Sinal {{ terms.down_payment|floatformat:"-2" }}%</span>{% endif %}
+  {% if terms.monthly_payment %}<span class="badge text-bg-light border">{{ terms.monthly_installments }}x mensais · {{ terms.monthly_payment|floatformat:"-2" }}%</span>{% endif %}
+  {% if terms.balloon_payment %}<span class="badge text-bg-light border">{{ terms.balloon_installments }}x intercaladas · {{ terms.balloon_payment|floatformat:"-2" }}%</span>{% endif %}
+  {% if terms.key_payment %}<span class="badge text-bg-light border">Chaves {{ terms.key_payment|floatformat:"-2" }}%</span>{% endif %}
+</div>

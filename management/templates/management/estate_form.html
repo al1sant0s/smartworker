@@ -6,6 +6,7 @@
 
 {% block extra_js %}
   <script src="{% static 'management/js/address.js' %}"></script>
+  <script src="{% static 'js/formset.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -47,6 +48,39 @@
               <div class="col-md-6">{% include "includes/form_field.html" with field=form.sales_start %}</div>
               <div class="col-md-6">{% include "includes/form_field.html" with field=form.delivery_date %}</div>
             </div>
+
+            <h5 class="mt-2 mb-3">Estruturas</h5>
+            {{ facility_formset.management_form }}
+            {% for error in facility_formset.non_form_errors %}
+              <div class="alert alert-danger">{{ error }}</div>
+            {% endfor %}
+            <div class="table-responsive">
+              <table class="table table-sm align-top mb-2">
+                <thead>
+                  <tr>
+                    <th>Estrutura</th>
+                    <th>Qtd.</th>
+                    <th>Área (m²)</th>
+                    <th>Pavimento</th>
+                    <th class="text-center">Remover</th>
+                  </tr>
+                </thead>
+                <tbody id="facilities-body">
+                  {% for facility_form in facility_formset %}
+                    {% include "management/includes/estate_facility_row.html" with form=facility_form %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <template id="facilities-empty">
+              {% include "management/includes/estate_facility_row.html" with form=facility_formset.empty_form %}
+            </template>
+            <div class="d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" data-formset-add="facilities">
+                <i class="bi bi-plus-lg me-1"></i>Adicionar estrutura
+              </button>
+              <a href="{% url 'management:facility_create' %}" target="_blank" class="small">Estrutura não está na lista? Cadastre aqui</a>
+            </div>
           </div>
           <div class="card-footer d-flex gap-2">
             <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button>
@@ -83,6 +117,31 @@
                   Registrado por {{ event.created_by|default:"sistema" }} em {{ event.created_at|date:"d/m/Y H:i" }}
                 </div>
               </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header d-flex align-items-center">
+            <h3 class="card-title mb-0">Condições de pagamento</h3>
+            <a href="{% url 'management:estate_payment_terms_create' object.pk %}" class="btn btn-primary btn-sm ms-auto">
+              <i class="bi bi-plus-lg me-1"></i>Nova condição
+            </a>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for terms in payment_terms %}
+              <li class="list-group-item d-flex align-items-start gap-2">
+                <div class="flex-grow-1">
+                  {% include "management/includes/payment_terms_summary.html" %}
+                </div>
+                <a href="{% url 'management:estate_payment_terms_update' terms.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></a>
+                <form method="post" action="{% url 'management:estate_payment_terms_delete' terms.pk %}" onsubmit="return confirm('Excluir esta condição de pagamento?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir" aria-label="Excluir"><i class="bi bi-trash"></i></button>
+                </form>
+              </li>
+            {% empty %}
+              <li class="list-group-item text-body-secondary">Nenhuma condição cadastrada.</li>
             {% endfor %}
           </ul>
         </div>

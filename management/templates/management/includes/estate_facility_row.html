@@ -1,0 +1,30 @@
+{% load form_tags %}
+{# Uma linha do formset de estruturas. Uso: include com form=<form do formset> #}
+<tr>
+  <td>
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    {{ form.facility|bootstrap }}
+    {% for error in form.facility.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+    {% for error in form.non_field_errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </td>
+  <td style="width: 6rem">
+    {{ form.quantity|bootstrap }}
+    {% for error in form.quantity.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </td>
+  <td style="width: 8rem">
+    {{ form.area|bootstrap }}
+    {% for error in form.area.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </td>
+  <td>
+    {{ form.floor|bootstrap }}
+    {% for error in form.floor.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </td>
+  <td class="text-center align-middle">
+    {% if form.instance.pk %}
+      {{ form.DELETE|bootstrap }}
+    {% else %}
+      {# Linha nova: removida pelo formset.js, que renumera as demais #}
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-formset-remove title="Remover linha" aria-label="Remover linha"><i class="bi bi-x-lg"></i></button>
+    {% endif %}
+  </td>
+</tr>

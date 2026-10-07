@@ -12,8 +12,6 @@ Class-based views
     2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
 Including another URLconf
     1. Import the include() function: from django.urls import include, path
-from django.views.generic import RedirectView
-from two_factor.urls import urlpatterns as tf_urls
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
@@ -21,7 +19,12 @@ from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import include, path
 from django.views.generic import RedirectView
+from two_factor.admin import AdminSiteOTPRequired
 from two_factor.urls import urlpatterns as tf_urls
+
+# O admin exige o segundo fator: o login passa pela tela do two_factor e só
+# entra quem tem app autenticador configurado (forma indicada na documentação)
+admin.site.__class__ = AdminSiteOTPRequired
 
 urlpatterns = [
     # Sem login, o LoginRequiredMiddleware manda para a tela de login
