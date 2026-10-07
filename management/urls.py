@@ -4,5 +4,6 @@ from . import views
 
 app_name = "management"
 urlpatterns = [
-    path("", views.index, name="index"),
+    path("", views.IndexView.as_view(), name="index"),
+    path("company/new/", views.CompanyCreateView.as_view(), name="company_create"),
 ]

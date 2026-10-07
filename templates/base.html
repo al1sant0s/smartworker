@@ -59,6 +59,13 @@
                 <p>Painel</p>
               </a>
             </li>
+            <li class="nav-header">CADASTROS</li>
+            <li class="nav-item">
+              <a href="{% url 'management:company_create' %}" class="nav-link{% if request.resolver_match.view_name == 'management:company_create' %} active{% endif %}">
+                <i class="nav-icon bi bi-building-add"></i>
+                <p>Nova construtora</p>
+              </a>
+            </li>
             {% endblock %}
           </ul>
         </nav>
