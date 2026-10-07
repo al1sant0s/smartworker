@@ -60,12 +60,21 @@
               </a>
             </li>
             <li class="nav-header">CADASTROS</li>
+            {# Fica ativo em todas as páginas da seção (lista, nova, editar) #}
+            {% with url_name=request.resolver_match.url_name namespace=request.resolver_match.namespace %}
             <li class="nav-item">
-              <a href="{% url 'management:company_create' %}" class="nav-link{% if request.resolver_match.view_name == 'management:company_create' %} active{% endif %}">
-                <i class="nav-icon bi bi-building-add"></i>
-                <p>Nova construtora</p>
+              <a href="{% url 'management:company_list' %}" class="nav-link{% if namespace == 'management' and 'company_' in url_name %} active{% endif %}">
+                <i class="nav-icon bi bi-building"></i>
+                <p>Construtoras</p>
               </a>
             </li>
+            <li class="nav-item">
+              <a href="{% url 'management:estate_list' %}" class="nav-link{% if namespace == 'management' and 'estate_' in url_name %} active{% endif %}">
+                <i class="nav-icon bi bi-houses"></i>
+                <p>Empreendimentos</p>
+              </a>
+            </li>
+            {% endwith %}
             {% endblock %}
           </ul>
         </nav>

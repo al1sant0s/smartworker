@@ -67,8 +67,16 @@ class Company(models.Model):
                 return False
         return True
 
+    @property
+    def cnpj_display(self):
+        """CNPJ com pontuação para exibição (ex: '12.345.678/0001-95')."""
+        c = self.cnpj
+        if len(c) != 14:
+            return c
+        return f"{c[:2]}.{c[2:5]}.{c[5:8]}/{c[8:12]}-{c[12:]}"
+
     def __str__(self):
-        return f"{self.name} (CNPJ: {self.cnpj})"
+        return f"{self.name} (CNPJ: {self.cnpj_display})"
 
 
 class Facility(models.Model):
@@ -132,6 +140,14 @@ class Estate(models.Model):
     class Meta:
         verbose_name = "Empreendimento"
         verbose_name_plural = "Empreendimentos"
+
+    def clean(self):
+        super().clean()
+        # Datas inválidas já geraram erro próprio em clean_fields()
+        if self.sales_start and self.delivery_date and self.delivery_date <= self.sales_start:
+            raise ValidationError(
+                {"delivery_date": "A data da entrega deve ser posterior ao início das vendas."}
+            )
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding

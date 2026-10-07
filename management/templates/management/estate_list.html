@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Empreendimentos | Smartworker{% endblock %}
+{% block page_title %}Empreendimentos{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-header d-flex align-items-center">
+      <h3 class="card-title mb-0">{{ page_obj.paginator.count }} empreendimento{{ page_obj.paginator.count|pluralize }}</h3>
+      <a href="{% url 'management:estate_create' %}" class="btn btn-primary btn-sm ms-auto">
+        <i class="bi bi-plus-lg me-1"></i>Novo empreendimento
+      </a>
+    </div>
+    {% if estate_list %}
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Construtora</th>
+                <th>Início das vendas</th>
+                <th>Entrega</th>
+                <th>Situação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for estate in estate_list %}
+                <tr>
+                  <td><a href="{% url 'management:estate_update' estate.pk %}">{{ estate.name }}</a></td>
+                  <td>{{ estate.company.name }}</td>
+                  <td>{{ estate.sales_start|date:"d/m/Y" }}</td>
+                  <td>{{ estate.delivery_date|date:"d/m/Y" }}</td>
+                  <td>
+                    <span class="badge {% if estate.status == 'ACTIVE' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ estate.status_label }}</span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% if is_paginated %}
+        <div class="card-footer">{% include "includes/pagination.html" %}</div>
+      {% endif %}
+    {% else %}
+      <div class="card-body text-body-secondary">Nenhum empreendimento cadastrado.</div>
+    {% endif %}
+  </div>
+{% endblock %}

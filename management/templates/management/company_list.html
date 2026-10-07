@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Construtoras | Smartworker{% endblock %}
+{% block page_title %}Construtoras{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-header d-flex align-items-center">
+      <h3 class="card-title mb-0">{{ page_obj.paginator.count }} construtora{{ page_obj.paginator.count|pluralize }}</h3>
+      <a href="{% url 'management:company_create' %}" class="btn btn-primary btn-sm ms-auto">
+        <i class="bi bi-plus-lg me-1"></i>Nova construtora
+      </a>
+    </div>
+    {% if company_list %}
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>CNPJ</th>
+                <th>Email</th>
+                <th>Telefone</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for company in company_list %}
+                <tr>
+                  <td><a href="{% url 'management:company_update' company.pk %}">{{ company.name }}</a></td>
+                  <td class="text-nowrap">{{ company.cnpj_display }}</td>
+                  <td>{{ company.email|default:"—" }}</td>
+                  <td class="text-nowrap">{{ company.phone.as_national|default:"—" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% if is_paginated %}
+        <div class="card-footer">{% include "includes/pagination.html" %}</div>
+      {% endif %}
+    {% else %}
+      <div class="card-body text-body-secondary">Nenhuma construtora cadastrada.</div>
+    {% endif %}
+  </div>
+{% endblock %}
