@@ -1,7 +1,18 @@
 {% extends "two_factor/_base.html" %}
+{# Páginas de autenticação: caixa centralizada do AdminLTE, sem menu lateral #}
 
-{% block content_wrapper %}
-  <div class="card auth-card">
-    {% block content %}{% endblock %}
+{% block body_class %}login-page bg-body-secondary{% endblock %}
+
+{% block body %}
+  <div class="login-box">
+    <div class="login-logo">
+      <a href="{% url 'home' %}"><b>Smart</b>worker</a>
+    </div>
+    <div class="card">
+      <div class="card-body login-card-body">
+        {% include "includes/messages.html" %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
   </div>
 {% endblock %}

@@ -1,0 +1,5 @@
+/* Ajustes do Smartworker sobre o AdminLTE (o tema fica em vendor/adminlte) */
+
+.login-box .login-logo b {
+  font-weight: 700;
+}
