@@ -1,0 +1,16 @@
+{# Barra de busca das listas (?q=). Uso: include com placeholder="..." #}
+{# Mantém os outros filtros da URL (mês, situação) e volta para a página 1 #}
+<form method="get" role="search" class="flex-grow-1" style="max-width: 32rem">
+  {% for key, value in request.GET.items %}
+    {% if key != "q" and key != "page" %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}
+  {% endfor %}
+  <div class="input-group input-group-sm">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input type="search" name="q" value="{{ search_query }}" class="form-control"
+           placeholder="{{ placeholder|default:'Buscar…' }}" aria-label="Buscar">
+    <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+    {% if search_query %}
+      <a href="{% querystring q=None page=None %}" class="btn btn-outline-secondary" title="Limpar busca" aria-label="Limpar busca"><i class="bi bi-x-lg"></i></a>
+    {% endif %}
+  </div>
+</form>

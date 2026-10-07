@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import DeleteView, ListView, TemplateView, UpdateView
 
+from management.mixins import SearchMixin
 from management.models import Estate
 
 from .forms import (
@@ -164,11 +165,17 @@ class EstateSourcesView(TemplateView):
 # Checklists --------------------------------------------------------------------
 
 
-class CheckListListView(ListView):
-    """Checklists de um mês (?month=AAAA-MM), com filtro por situação (?status=)."""
+class CheckListListView(SearchMixin, ListView):
+    """Checklists de um mês (?month=AAAA-MM), com filtro por situação (?status=) e busca (?q=)."""
 
     model = CheckList
     paginate_by = 50
+    search_fields = [
+        "estate__name",
+        "estate__company__name",
+        "estate__city__name",
+        "checked_by__username",
+    ]
 
     def get(self, request, *args, **kwargs):
         self.month = parse_month(request.GET.get("month"))
@@ -179,7 +186,9 @@ class CheckListListView(ListView):
 
     def get_queryset(self):
         queryset = (
-            CheckList.objects.filter(reference_month=self.month)
+            super()
+            .get_queryset()
+            .filter(reference_month=self.month)
             .select_related("estate", "estate__company", "estate__city", "checked_by")
             .order_by("estate__name")
         )

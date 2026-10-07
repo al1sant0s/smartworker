@@ -5,8 +5,9 @@
 
 {% block content %}
   <div class="card">
-    <div class="card-header d-flex align-items-center">
-      <h3 class="card-title mb-0">{{ page_obj.paginator.count }} construtora{{ page_obj.paginator.count|pluralize }}</h3>
+    <div class="card-header d-flex flex-wrap align-items-center gap-2">
+      <h3 class="card-title mb-0 me-2">{{ page_obj.paginator.count }} construtora{{ page_obj.paginator.count|pluralize }}</h3>
+      {% include "includes/search_form.html" with placeholder="Nome, CNPJ, email ou telefone" %}
       <a href="{% url 'management:company_create' %}" class="btn btn-primary btn-sm ms-auto">
         <i class="bi bi-plus-lg me-1"></i>Nova construtora
       </a>
@@ -40,7 +41,7 @@
         <div class="card-footer">{% include "includes/pagination.html" %}</div>
       {% endif %}
     {% else %}
-      <div class="card-body text-body-secondary">Nenhuma construtora cadastrada.</div>
+      <div class="card-body text-body-secondary">{% if search_query %}Nada encontrado para “{{ search_query }}”.{% else %}Nenhuma construtora cadastrada.{% endif %}</div>
     {% endif %}
   </div>
 {% endblock %}

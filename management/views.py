@@ -7,6 +7,7 @@ from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from .forms import CompanyForm, EstateForm, TrackingEventForm
+from .mixins import SearchMixin
 from .models import City, Company, Estate, State, TrackingEvent
 
 
@@ -28,10 +29,12 @@ class CityListView(View):
 # Construtoras ------------------------------------------------------------------
 
 
-class CompanyListView(ListView):
+class CompanyListView(SearchMixin, ListView):
     model = Company
     ordering = ["name"]
     paginate_by = 25
+    search_fields = ["name", "email"]
+    digit_search_fields = ["cnpj", "phone"]
 
 
 class CompanyCreateView(SuccessMessageMixin, CreateView):
@@ -51,15 +54,19 @@ class CompanyUpdateView(SuccessMessageMixin, UpdateView):
 # Empreendimentos ---------------------------------------------------------------
 
 
-class EstateListView(ListView):
+class EstateListView(SearchMixin, ListView):
     model = Estate
     paginate_by = 25
+    search_fields = ["name", "company__name", "street", "district", "city__name", "city__state"]
+    digit_search_fields = ["cep"]
 
     def get_queryset(self):
         # Situação atual = status do evento mais recente de cada empreendimento
         latest_status = TrackingEvent.objects.filter(estate=OuterRef("pk")).values("status")[:1]
         return (
-            Estate.objects.select_related("company", "city")
+            super()
+            .get_queryset()
+            .select_related("company", "city")
             .annotate(status=Subquery(latest_status))
             .order_by("name")
         )

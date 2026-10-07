@@ -6,11 +6,14 @@
 {% block content %}
   <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
     <div class="btn-group" role="group" aria-label="Mês">
-      <a href="?month={{ previous_month|date:'Y-m' }}" class="btn btn-outline-secondary" aria-label="Mês anterior"><i class="bi bi-chevron-left"></i></a>
+      <a href="{% querystring month=previous_month|date:'Y-m' page=None %}" class="btn btn-outline-secondary" aria-label="Mês anterior"><i class="bi bi-chevron-left"></i></a>
       <form method="get" class="d-flex">
+        {% for key, value in request.GET.items %}
+          {% if key != "month" and key != "page" %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}
+        {% endfor %}
         <input type="month" name="month" value="{{ month|date:'Y-m' }}" class="form-control rounded-0" onchange="this.form.submit()" aria-label="Mês de referência">
       </form>
-      <a href="?month={{ next_month|date:'Y-m' }}" class="btn btn-outline-secondary" aria-label="Próximo mês"><i class="bi bi-chevron-right"></i></a>
+      <a href="{% querystring month=next_month|date:'Y-m' page=None %}" class="btn btn-outline-secondary" aria-label="Próximo mês"><i class="bi bi-chevron-right"></i></a>
     </div>
 
     <form method="post" action="{% url 'checklist:checklist_generate' %}" class="ms-auto">
@@ -35,19 +38,20 @@
   {% endif %}
 
   <div class="card">
-    <div class="card-header">
-      <ul class="nav nav-pills card-header-pills">
+    <div class="card-header d-flex flex-wrap align-items-center gap-2">
+      <ul class="nav nav-pills card-header-pills me-auto">
         <li class="nav-item">
-          <a class="nav-link{% if not status %} active{% endif %}" href="?month={{ month|date:'Y-m' }}">Todos <span class="badge text-bg-light">{{ counts.total }}</span></a>
+          <a class="nav-link{% if not status %} active{% endif %}" href="{% querystring status=None page=None %}">Todos <span class="badge text-bg-light">{{ counts.total }}</span></a>
         </li>
         {% for value, label, count in status_tabs %}
           <li class="nav-item">
-            <a class="nav-link{% if status == value %} active{% endif %}" href="?month={{ month|date:'Y-m' }}&status={{ value }}">
+            <a class="nav-link{% if status == value %} active{% endif %}" href="{% querystring status=value page=None %}">
               {{ label }} <span class="badge text-bg-light">{{ count }}</span>
             </a>
           </li>
         {% endfor %}
       </ul>
+      {% include "includes/search_form.html" with placeholder="Empreendimento, construtora, município ou usuário" %}
     </div>
 
     {% if checklist_list %}
@@ -85,7 +89,7 @@
         <div class="card-footer">{% include "includes/pagination.html" %}</div>
       {% endif %}
     {% elif counts.total %}
-      <div class="card-body text-body-secondary">Nenhum checklist com essa situação.</div>
+      <div class="card-body text-body-secondary">{% if search_query %}Nada encontrado para “{{ search_query }}”.{% else %}Nenhum checklist com essa situação.{% endif %}</div>
     {% else %}
       <div class="card-body text-body-secondary">
         Nenhum checklist para {{ month|date:"m/Y" }}. Use “Gerar checklists do mês” para criar um para cada empreendimento ativo.
