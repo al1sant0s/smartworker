@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Checklists {{ month|date:"m/Y" }} | Smartworker{% endblock %}
+{% block page_title %}Checklists de {{ month|date:"F \d\e Y" }}{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div class="btn-group" role="group" aria-label="Mês">
+      <a href="?month={{ previous_month|date:'Y-m' }}" class="btn btn-outline-secondary" aria-label="Mês anterior"><i class="bi bi-chevron-left"></i></a>
+      <form method="get" class="d-flex">
+        <input type="month" name="month" value="{{ month|date:'Y-m' }}" class="form-control rounded-0" onchange="this.form.submit()" aria-label="Mês de referência">
+      </form>
+      <a href="?month={{ next_month|date:'Y-m' }}" class="btn btn-outline-secondary" aria-label="Próximo mês"><i class="bi bi-chevron-right"></i></a>
+    </div>
+
+    <form method="post" action="{% url 'checklist:checklist_generate' %}" class="ms-auto">
+      {% csrf_token %}
+      <input type="hidden" name="month" value="{{ month|date:'Y-m' }}">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Gerar checklists do mês</button>
+    </form>
+  </div>
+
+  {% if counts.total %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-1">
+          <span>{{ checked }} de {{ counts.total }} verificado{{ counts.total|pluralize }}</span>
+          <span class="text-body-secondary">{% widthratio checked counts.total 100 %}%</span>
+        </div>
+        <div class="progress" role="progressbar" aria-valuenow="{{ checked }}" aria-valuemin="0" aria-valuemax="{{ counts.total }}">
+          <div class="progress-bar" style="width: {% widthratio checked counts.total 100 %}%"></div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header">
+      <ul class="nav nav-pills card-header-pills">
+        <li class="nav-item">
+          <a class="nav-link{% if not status %} active{% endif %}" href="?month={{ month|date:'Y-m' }}">Todos <span class="badge text-bg-light">{{ counts.total }}</span></a>
+        </li>
+        {% for value, label, count in status_tabs %}
+          <li class="nav-item">
+            <a class="nav-link{% if status == value %} active{% endif %}" href="?month={{ month|date:'Y-m' }}&status={{ value }}">
+              {{ label }} <span class="badge text-bg-light">{{ count }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if checklist_list %}
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Empreendimento</th>
+                <th>Construtora</th>
+                <th>Município</th>
+                <th>Situação</th>
+                <th>Verificado por</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for checklist in checklist_list %}
+                <tr>
+                  <td><a href="{% url 'checklist:checklist_detail' checklist.pk %}">{{ checklist.estate.name }}</a></td>
+                  <td>{{ checklist.estate.company.name }}</td>
+                  <td class="text-nowrap">{{ checklist.estate.city }}</td>
+                  <td>{% include "checklist/includes/status_badge.html" with status=checklist.status label=checklist.get_status_display %}</td>
+                  <td class="text-nowrap">
+                    {% if checklist.checked_at %}
+                      {{ checklist.checked_by|default:"—" }} <span class="text-body-secondary small">em {{ checklist.checked_at|date:"d/m/Y H:i" }}</span>
+                    {% else %}—{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% if is_paginated %}
+        <div class="card-footer">{% include "includes/pagination.html" %}</div>
+      {% endif %}
+    {% elif counts.total %}
+      <div class="card-body text-body-secondary">Nenhum checklist com essa situação.</div>
+    {% else %}
+      <div class="card-body text-body-secondary">
+        Nenhum checklist para {{ month|date:"m/Y" }}. Use “Gerar checklists do mês” para criar um para cada empreendimento ativo.
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

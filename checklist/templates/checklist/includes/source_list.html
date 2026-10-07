@@ -1,0 +1,27 @@
+{# Fontes de um empreendimento, como links clicáveis. Uso: include com links= emails= phones= #}
+<ul class="list-group list-group-flush">
+  {% for source in links %}
+    <li class="list-group-item">
+      <i class="bi bi-link-45deg me-1"></i>
+      <a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.url }}</a>
+      {% if source.description %}<div class="small text-body-secondary">{{ source.description }}</div>{% endif %}
+    </li>
+  {% endfor %}
+  {% for source in emails %}
+    <li class="list-group-item">
+      <i class="bi bi-envelope me-1"></i>
+      <a href="mailto:{{ source.email }}">{{ source.email }}</a>
+      {% if source.description %}<div class="small text-body-secondary">{{ source.description }}</div>{% endif %}
+    </li>
+  {% endfor %}
+  {% for source in phones %}
+    <li class="list-group-item">
+      <i class="bi bi-telephone me-1"></i>
+      <a href="tel:{{ source.phone }}">{{ source.phone.as_national }}</a>
+      {% if source.description %}<div class="small text-body-secondary">{{ source.description }}</div>{% endif %}
+    </li>
+  {% endfor %}
+  {% if not links and not emails and not phones %}
+    <li class="list-group-item text-body-secondary">Nenhuma fonte cadastrada.</li>
+  {% endif %}
+</ul>

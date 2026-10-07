@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 from PIL import Image
 
-from management.models import Company, Estate
+from management.models import Company, Estate, TrackingEvent
 
 
 class SourceHyperLink(models.Model):
@@ -28,6 +28,10 @@ class SourceHyperLink(models.Model):
     class Meta:
         verbose_name = "Link"
         verbose_name_plural = "Links"
+        ordering = ["url"]
+
+    def __str__(self):
+        return f"{self.url} ({self.description})" if self.description else self.url
 
 
 class SourceEmail(models.Model):
@@ -44,6 +48,10 @@ class SourceEmail(models.Model):
     class Meta:
         verbose_name = "Email para contato"
         verbose_name_plural = "Emails para contato"
+        ordering = ["email"]
+
+    def __str__(self):
+        return f"{self.email} ({self.description})" if self.description else self.email
 
 
 class SourcePhone(models.Model):
@@ -60,6 +68,30 @@ class SourcePhone(models.Model):
     class Meta:
         verbose_name = "Telefone para contato"
         verbose_name_plural = "Telefones para contato"
+        ordering = ["phone"]
+
+    def __str__(self):
+        phone = self.phone.as_national
+        return f"{phone} ({self.description})" if self.description else phone
+
+
+class CheckListQuerySet(models.QuerySet):
+    def create_for_month(self, reference_month):
+        """Cria um checklist pendente para cada empreendimento ativo que ainda não tem um no mês.
+
+        Usado pelo comando create_monthly_checklists e pela lista de checklists.
+        Retorna os checklists criados.
+        """
+        reference_month = reference_month.replace(day=1)
+        existing = CheckList.objects.filter(reference_month=reference_month).values("estate_id")
+        events = TrackingEvent.objects.tracked().exclude(estate_id__in=existing)
+        return CheckList.objects.bulk_create(
+            [
+                CheckList(estate_id=event.estate_id, reference_month=reference_month)
+                for event in events
+            ],
+            ignore_conflicts=True,
+        )
 
 
 class CheckList(models.Model):
@@ -96,6 +128,8 @@ class CheckList(models.Model):
     checked_at = models.DateTimeField(
         blank=True, null=True, verbose_name="Verificado em"
     )
+
+    objects = CheckListQuerySet.as_manager()
 
     class Meta:
         verbose_name = "Checklist"
@@ -157,7 +191,7 @@ class AvailabilitySheet(models.Model):
     def clean(self):
         super().clean()
         # A extensão sozinha não garante o conteúdo: confere se imagens abrem de fato
-        if self.file and self.extension in IMAGE_EXTENSIONS:
+        if self.file and self.is_image:
             try:
                 self.file.seek(0)
                 Image.open(self.file).verify()
@@ -169,6 +203,10 @@ class AvailabilitySheet(models.Model):
     @property
     def extension(self):
         return Path(self.file.name).suffix.lower().lstrip(".")
+
+    @property
+    def is_image(self):
+        return self.extension in IMAGE_EXTENSIONS
 
     def __str__(self):
         return Path(self.file.name).name

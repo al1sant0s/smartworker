@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Checklist · {{ estate.name }} {{ object.reference_month|date:"m/Y" }} | Smartworker{% endblock %}
+{% block page_title %}{{ estate.name }} · {{ object.reference_month|date:"m/Y" }}{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <a href="{% url 'checklist:checklist_list' %}?month={{ object.reference_month|date:'Y-m' }}" class="btn btn-link px-0">
+      <i class="bi bi-arrow-left me-1"></i>Checklists de {{ object.reference_month|date:"m/Y" }}
+    </a>
+    <div class="ms-auto btn-group">
+      {% if previous_pending %}
+        <a href="{% url 'checklist:checklist_detail' previous_pending.pk %}" class="btn btn-outline-secondary btn-sm" title="{{ previous_pending.estate.name }}">
+          <i class="bi bi-chevron-left"></i> Pendente anterior
+        </a>
+      {% endif %}
+      {% if next_pending %}
+        <a href="{% url 'checklist:checklist_detail' next_pending.pk %}" class="btn btn-outline-secondary btn-sm" title="{{ next_pending.estate.name }}">
+          Próximo pendente <i class="bi bi-chevron-right"></i>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-5">
+      <div class="card mb-4">
+        <div class="card-header"><h3 class="card-title mb-0">Empreendimento</h3></div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Construtora</dt><dd class="col-sm-8">{{ estate.company.name }}</dd>
+            <dt class="col-sm-4">Endereço</dt><dd class="col-sm-8">{{ estate.address_display }}<br><span class="text-body-secondary">CEP {{ estate.cep_display }}</span></dd>
+            <dt class="col-sm-4">Entrega</dt><dd class="col-sm-8 mb-0">{{ estate.delivery_date|date:"d/m/Y" }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center">
+          <h3 class="card-title mb-0">Fontes</h3>
+          <a href="{% url 'checklist:estate_sources' estate.pk %}" class="btn btn-outline-secondary btn-sm ms-auto">
+            <i class="bi bi-pencil me-1"></i>Gerenciar
+          </a>
+        </div>
+        {% include "checklist/includes/source_list.html" %}
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card mb-4">
+        <div class="card-header"><h3 class="card-title mb-0">Tabelas de preços e disponibilidade</h3></div>
+        <ul class="list-group list-group-flush">
+          {% for sheet in sheets %}
+            <li class="list-group-item d-flex align-items-center gap-2">
+              <i class="bi {% if sheet.extension == 'pdf' %}bi-file-earmark-pdf{% elif sheet.is_image %}bi-file-earmark-image{% else %}bi-file-earmark-text{% endif %}"></i>
+              <a href="{{ sheet.file.url }}" target="_blank" rel="noopener" class="text-break">{{ sheet }}</a>
+              <span class="small text-body-secondary ms-auto text-nowrap">{{ sheet.uploaded_at|date:"d/m/Y H:i" }}</span>
+              <form method="post" action="{% url 'checklist:sheet_delete' sheet.pk %}" onsubmit="return confirm('Remover este arquivo?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Remover" aria-label="Remover"><i class="bi bi-trash"></i></button>
+              </form>
+            </li>
+          {% empty %}
+            <li class="list-group-item text-body-secondary">Nenhum arquivo enviado.</li>
+          {% endfor %}
+        </ul>
+        <div class="card-body border-top">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {% include "includes/form_fields.html" with form=sheet_form %}
+            <button type="submit" name="upload" class="btn btn-outline-primary btn-sm"><i class="bi bi-upload me-1"></i>Enviar arquivo</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card card-primary card-outline mb-4">
+        <div class="card-header d-flex align-items-center">
+          <h3 class="card-title mb-0">Resultado</h3>
+          <span class="ms-auto">{% include "checklist/includes/status_badge.html" with status=object.status label=object.get_status_display %}</span>
+        </div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="card-body">
+            {% include "includes/form_errors.html" %}
+            {% for choice in form.status %}
+              <div class="form-check">
+                {{ choice.tag }}
+                <label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+              </div>
+            {% endfor %}
+            {% for error in form.status.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            {% if object.checked_at %}
+              <p class="small text-body-secondary mt-3 mb-0">
+                Verificado por {{ object.checked_by|default:"—" }} em {{ object.checked_at|date:"d/m/Y H:i" }}
+              </p>
+            {% endif %}
+          </div>
+          <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button>
+            <button type="submit" name="save_next" class="btn btn-outline-primary">Salvar e ir para o próximo</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

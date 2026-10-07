@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Fontes · {{ estate.name }} | Smartworker{% endblock %}
+{% block page_title %}Fontes de {{ estate.name }}{% endblock %}
+
+{% block content %}
+  <p class="text-body-secondary">
+    Construtora: {{ estate.company.name }} ·
+    <a href="{% url 'management:estate_update' estate.pk %}">voltar ao empreendimento</a>
+  </p>
+
+  <div class="row">
+    {% for section in sections %}
+      <div class="col-xl-4 col-lg-6" id="{{ section.kind }}">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3 class="card-title mb-0"><i class="bi {{ section.icon }} me-1"></i>{{ section.title }}</h3>
+          </div>
+
+          <ul class="list-group list-group-flush">
+            {% for source in section.sources %}
+              <li class="list-group-item d-flex align-items-start gap-2">
+                <div class="flex-grow-1 text-break">
+                  {% if section.kind == "link" %}
+                    <a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.url }}</a>
+                  {% elif section.kind == "email" %}
+                    <a href="mailto:{{ source.email }}">{{ source.email }}</a>
+                  {% else %}
+                    <a href="tel:{{ source.phone }}">{{ source.phone.as_national }}</a>
+                  {% endif %}
+                  {% if source.description %}<div class="small text-body-secondary">{{ source.description }}</div>{% endif %}
+                </div>
+                <form method="post" onsubmit="return confirm('Desvincular esta fonte do empreendimento?')">
+                  {% csrf_token %}
+                  <input type="hidden" name="kind" value="{{ section.kind }}">
+                  <input type="hidden" name="action" value="unlink">
+                  <input type="hidden" name="source" value="{{ source.pk }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Desvincular" aria-label="Desvincular">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </form>
+              </li>
+            {% empty %}
+              <li class="list-group-item text-body-secondary">Nenhum cadastrado.</li>
+            {% endfor %}
+          </ul>
+
+          <div class="card-body border-top">
+            <h6>Cadastrar novo</h6>
+            <form method="post" novalidate>
+              {% csrf_token %}
+              <input type="hidden" name="kind" value="{{ section.kind }}">
+              <input type="hidden" name="action" value="new">
+              {% include "includes/form_fields.html" with form=section.new_form %}
+              <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Cadastrar</button>
+            </form>
+
+            {% if section.link_form.fields.source.queryset.exists %}
+              <hr>
+              <h6>Vincular existente da construtora</h6>
+              <form method="post" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="kind" value="{{ section.kind }}">
+                <input type="hidden" name="action" value="link">
+                {% include "includes/form_fields.html" with form=section.link_form %}
+                <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-link me-1"></i>Vincular</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

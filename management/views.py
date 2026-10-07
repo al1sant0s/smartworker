@@ -104,7 +104,7 @@ class TrackingEventCreateView(SuccessMessageMixin, CreateView):
     form_class = TrackingEventForm
 
     def dispatch(self, request, *args, **kwargs):
-        self.estate = get_object_or_404(Estate, pk=kwargs["pk"])
+        self.estate = get_object_or_404(Estate, pk=kwargs["estate_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):

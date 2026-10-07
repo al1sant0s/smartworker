@@ -13,7 +13,7 @@ urlpatterns = [
     path("estate/new/", views.EstateCreateView.as_view(), name="estate_create"),
     path("estate/edit/<int:pk>/", views.EstateUpdateView.as_view(), name="estate_update"),
     path(
-        "estate/<int:pk>/events/new/",
+        "estate/<int:estate_pk>/events/new/",
         views.TrackingEventCreateView.as_view(),
         name="estate_event_create",
     ),

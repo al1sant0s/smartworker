@@ -1,17 +1,18 @@
 {# Paginação das ListViews (usa page_obj e is_paginated do contexto) #}
+{# {% querystring %} mantém os outros parâmetros da URL, como filtros #}
 {% if is_paginated %}
   <nav aria-label="Paginação">
     <ul class="pagination pagination-sm m-0">
       {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">&laquo;</a></li>
+        <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.previous_page_number %}" aria-label="Anterior">&laquo;</a></li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
       {% endif %}
       {% for number in page_obj.paginator.page_range %}
-        <li class="page-item{% if number == page_obj.number %} active{% endif %}"><a class="page-link" href="?page={{ number }}">{{ number }}</a></li>
+        <li class="page-item{% if number == page_obj.number %} active{% endif %}"><a class="page-link" href="{% querystring page=number %}">{{ number }}</a></li>
       {% endfor %}
       {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Próxima">&raquo;</a></li>
+        <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.next_page_number %}" aria-label="Próxima">&raquo;</a></li>
       {% else %}
         <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
       {% endif %}
