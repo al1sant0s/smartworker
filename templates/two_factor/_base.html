@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{# Faz as páginas do django-two-factor-auth usarem o layout do projeto #}
+
+{% block extra_head %}{% block extra_media %}{% endblock %}{% endblock %}
+
+{% block main %}
+  {% block content_wrapper %}{% block content %}{% endblock %}{% endblock %}
+{% endblock %}

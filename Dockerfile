@@ -16,11 +16,10 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER . .
 
 # RUN não passa pelo entrypoint, então o ambiente precisa ser ativado aqui
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-# SECRET_KEY é obrigatória no settings; aqui basta um valor descartável
-RUN SECRET_KEY=build-only python manage.py collectstatic --noinput \
-    && mkdir -p /app/media
+RUN mkdir -p /app/staticfiles /app/media
 
 EXPOSE 8000
 
 # O entrypoint da imagem micromamba já ativa o ambiente base
-CMD ["sh", "-c", "python manage.py migrate && gunicorn smartworker.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
+# collectstatic roda na subida porque STATIC_ROOT é uma pasta do host (nginx)
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn smartworker.wsgi:application --bind 0.0.0.0:8000 --workers 3"]

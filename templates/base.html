@@ -1,0 +1,45 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Smartworker{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% block header %}
+  <header class="site-header">
+    <a class="brand" href="{% url 'home' %}">Smartworker</a>
+    {% if user.is_authenticated %}
+    <nav class="site-nav">
+      {% block nav %}{% endblock %}
+      <span class="nav-user">{{ user.get_full_name|default:user.username }}</span>
+      <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-link">Sair</button>
+      </form>
+    </nav>
+    {% endif %}
+  </header>
+  {% endblock %}
+
+  <main class="container">
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li class="message message-{{ message.level_tag }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% block main %}{% block content %}{% endblock %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="site-footer">
+    <p>&copy; {% now "Y" %} Smartworker</p>
+  </footer>
+  {% endblock %}
+</body>
+</html>

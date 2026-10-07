@@ -1,14 +1,18 @@
 services:
   web:
     build: .
+    # Mesmo usuário do host, para escrever nas pastas servidas pelo nginx
+    user: "${UID:-1000}:${GID:-1000}"
     env_file: .env
     environment:
       # Montada a partir das variáveis POSTGRES_* do .env
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      STATIC_ROOT: /app/staticfiles
       MEDIA_ROOT: /app/media
     volumes:
-      # Uploads (FileField/ImageField) persistem fora da imagem
-      - media_data:/app/media
+      # Pastas do host servidas pelo nginx em /static/ e /media/
+      - ${STATIC_HOST_DIR:-/var/www/smartworker/static}:/app/staticfiles
+      - ${MEDIA_HOST_DIR:-/var/www/smartworker/media}:/app/media
     ports:
       - "8000:8000"
     depends_on:
@@ -52,4 +56,3 @@ services:
 
 volumes:
   postgres_data:
-  media_data:

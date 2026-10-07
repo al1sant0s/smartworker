@@ -1,0 +1,55 @@
+{% extends "two_factor/_base_focus.html" %}
+{% load i18n two_factor_tags %}
+
+{% block title %}Entrar | Smartworker{% endblock %}
+
+{% block extra_media %}{{ form.media }}{% endblock %}
+
+{% block content %}
+  <h1>Entrar</h1>
+
+  {% if wizard.steps.current == "auth" %}
+    <p>Informe seu usuário e senha.</p>
+  {% elif wizard.steps.current == "token" %}
+    <p>{{ device|as_verbose_action }}</p>
+  {% elif wizard.steps.current == "backup" %}
+    <p>Informe um dos códigos de backup gerados para a sua conta.</p>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {{ wizard.management_form }}
+
+    <div class="form-fields">
+      {{ wizard.form.as_div }}
+    </div>
+
+    {% if other_devices %}
+      <p>Ou use outro método de autenticação:</p>
+      {% for other in other_devices %}
+        <button name="challenge_device" value="{{ other.persistent_id }}"
+                type="submit" class="btn btn-secondary btn-block">{{ other|as_action }}</button>
+      {% endfor %}
+    {% endif %}
+
+    <div class="form-actions">
+      {% if wizard.steps.prev %}
+        <button name="wizard_goto_step" value="{{ wizard.steps.prev }}"
+                type="submit" class="btn btn-secondary">Voltar</button>
+      {% endif %}
+      <button type="submit" class="btn btn-primary">
+        {% if wizard.steps.current == "auth" %}Continuar{% else %}Entrar{% endif %}
+      </button>
+    </div>
+  </form>
+
+  {% if backup_tokens %}
+    <hr>
+    <form method="post">
+      {% csrf_token %}
+      <p>Sem acesso ao app autenticador? Use um código de backup.</p>
+      <button name="wizard_goto_step" value="backup" type="submit"
+              class="btn btn-sm btn-secondary btn-block">Usar código de backup</button>
+    </form>
+  {% endif %}
+{% endblock %}

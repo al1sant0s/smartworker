@@ -61,6 +61,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-Party Apps
     "phonenumber_field",
+    # Autenticação em dois fatores (TOTP via apps como Google Authenticator)
+    "django_otp",
+    "django_otp.plugins.otp_static",
+    "django_otp.plugins.otp_totp",
+    "two_factor",
     # Remove os arquivos do disco quando o registro é apagado ou o arquivo trocado
     "django_cleanup.apps.CleanupConfig",
 ]
@@ -73,6 +78,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Todo o sistema exige login; views públicas usam @login_not_required
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
+    # Marca request.user.is_verified() após o segundo fator
+    "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -83,7 +92,7 @@ WSGI_APPLICATION = "smartworker.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -101,6 +110,13 @@ TEMPLATES = [
 # ==============================================================================
 
 AUTH_USER_MODEL = "management.CustomUser"
+
+LOGIN_URL = "two_factor:login"
+LOGIN_REDIRECT_URL = "management:index"
+LOGOUT_REDIRECT_URL = "two_factor:login"
+
+# Nome do emissor exibido no app autenticador
+TWO_FACTOR_ISSUER = "Smartworker"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -147,6 +163,8 @@ USE_TZ = True
 
 STATIC_URL = env("STATIC_URL", default="static/")
 STATIC_ROOT = env("STATIC_ROOT", default=str(BASE_DIR / "staticfiles"))
+# Estáticos do projeto (base.css etc.), além dos static/ de cada app
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 MEDIA_URL = env("MEDIA_URL", default="media/")
 MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media"))
