@@ -1,0 +1,31 @@
+{% extends "two_factor/_account.html" %}
+{% load two_factor_tags %}
+
+{% block title %}Segurança da conta | Smartworker{% endblock %}
+{% block card_title %}Autenticação em dois fatores{% endblock %}
+
+{% block content %}
+  {% if default_device %}
+    <p><span class="badge text-bg-success"><i class="bi bi-shield-check me-1"></i>Ativada</span></p>
+    <p>Método principal: {{ default_device|as_action }}</p>
+
+    <h5 class="mt-4">Códigos de backup</h5>
+    <p>
+      Use um código de backup para entrar quando estiver sem o celular.
+      {% if backup_tokens == 1 %}Resta 1 código.{% else %}Restam {{ backup_tokens }} códigos.{% endif %}
+    </p>
+    <a href="{% url 'two_factor:backup_tokens' %}" class="btn btn-outline-primary">
+      <i class="bi bi-key me-1"></i>Ver códigos
+    </a>
+
+    <h5 class="mt-4">Desativar</h5>
+    <p class="text-body-secondary">Não recomendado: sua conta ficará protegida apenas pela senha.</p>
+    <a href="{% url 'two_factor:disable' %}" class="btn btn-outline-danger">Desativar autenticação em dois fatores</a>
+  {% else %}
+    <p><span class="badge text-bg-warning"><i class="bi bi-shield-exclamation me-1"></i>Desativada</span></p>
+    <p>Proteja sua conta exigindo, além da senha, um código gerado por um app autenticador no celular.</p>
+    <a href="{% url 'two_factor:setup' %}" class="btn btn-primary">
+      <i class="bi bi-shield-lock me-1"></i>Ativar autenticação em dois fatores
+    </a>
+  {% endif %}
+{% endblock %}

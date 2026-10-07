@@ -1,0 +1,18 @@
+{% extends "two_factor/_account.html" %}
+
+{% block title %}Desativar autenticação em dois fatores | Smartworker{% endblock %}
+{% block card_title %}Desativar autenticação em dois fatores{% endblock %}
+
+{% block content %}
+  <div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle me-1"></i>Sua conta ficará protegida apenas pela senha.
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    {% include "includes/form_fields.html" %}
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-danger">Desativar</button>
+      <a href="{% url 'two_factor:profile' %}" class="btn btn-link">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}

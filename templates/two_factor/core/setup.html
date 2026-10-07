@@ -1,0 +1,44 @@
+{% extends "two_factor/_account.html" %}
+
+{% block title %}Ativar autenticação em dois fatores | Smartworker{% endblock %}
+{% block card_title %}Ativar autenticação em dois fatores{% endblock %}
+
+{% block extra_media %}{{ form.media }}{% endblock %}
+
+{% block content %}
+  {% if wizard.steps.current == "welcome" %}
+    <p>Depois de ativar, o login pedirá, além da senha, um código de 6 dígitos gerado por um app
+      autenticador no seu celular, como Google Authenticator ou Microsoft Authenticator.</p>
+  {% elif wizard.steps.current == "method" %}
+    <p>Escolha o método de autenticação.</p>
+  {% elif wizard.steps.current == "generator" %}
+    <ol class="ps-3">
+      <li>Abra o app autenticador e escaneie o QR code abaixo.</li>
+      <li>Digite o código de 6 dígitos que aparece no app.</li>
+    </ol>
+    <div class="text-center my-3">
+      <img src="{{ QR_URL }}" alt="QR code" class="img-thumbnail bg-white" width="220" height="220">
+    </div>
+    <p class="small text-body-secondary">
+      Não consegue escanear? Cadastre manualmente com a chave:
+      <code class="user-select-all">{{ secret_key }}</code>
+    </p>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {{ wizard.management_form }}
+    {% include "includes/form_fields.html" with form=wizard.form %}
+
+    <div class="d-flex gap-2">
+      {% if wizard.steps.prev %}
+        <button name="wizard_goto_step" value="{{ wizard.steps.prev }}" type="submit"
+                class="btn btn-outline-secondary">Voltar</button>
+      {% endif %}
+      <a href="{% url 'two_factor:profile' %}" class="btn btn-link">Cancelar</a>
+      <button type="submit" class="btn btn-primary ms-auto">
+        {% if wizard.steps.current == "generator" %}Ativar{% else %}Avançar{% endif %}
+      </button>
+    </div>
+  </form>
+{% endblock %}

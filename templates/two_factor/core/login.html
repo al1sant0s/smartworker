@@ -1,5 +1,5 @@
 {% extends "two_factor/_base_focus.html" %}
-{% load two_factor_tags form_tags %}
+{% load two_factor_tags %}
 
 {% block title %}Entrar | Smartworker{% endblock %}
 
@@ -20,22 +20,7 @@
     {% csrf_token %}
     {{ wizard.management_form }}
 
-    {% for error in wizard.form.non_field_errors %}
-      <div class="alert alert-danger">{{ error }}</div>
-    {% endfor %}
-
-    {% for field in wizard.form %}
-      <div class="mb-3">
-        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-        {{ field|bootstrap }}
-        {% for error in field.errors %}
-          <div class="invalid-feedback">{{ error }}</div>
-        {% endfor %}
-        {% if field.help_text %}
-          <div class="form-text">{{ field.help_text }}</div>
-        {% endif %}
-      </div>
-    {% endfor %}
+    {% include "includes/form_fields.html" with form=wizard.form %}
 
     {% if other_devices %}
       <p class="mb-2">Ou use outro método de autenticação:</p>

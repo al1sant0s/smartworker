@@ -1,0 +1,27 @@
+{% extends "two_factor/_account.html" %}
+
+{% block title %}Códigos de backup | Smartworker{% endblock %}
+{% block card_title %}Códigos de backup{% endblock %}
+
+{% block content %}
+  <p>Cada código pode ser usado uma única vez para entrar sem o app autenticador.
+    Gerar novos códigos invalida os anteriores.</p>
+
+  {% if device.token_set.count %}
+    <div class="row row-cols-2 g-2 mb-3">
+      {% for token in device.token_set.all %}
+        <div class="col"><code class="d-block p-2 border rounded text-center fs-6 user-select-all">{{ token.token }}</code></div>
+      {% endfor %}
+    </div>
+    <p class="text-body-secondary small">Imprima ou anote esses códigos e guarde-os em lugar seguro.</p>
+  {% else %}
+    <p class="text-body-secondary">Você ainda não tem códigos de backup.</p>
+  {% endif %}
+
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="btn btn-primary">Gerar novos códigos</button>
+    <a href="{% url 'two_factor:profile' %}" class="btn btn-link">Voltar para segurança da conta</a>
+  </form>
+{% endblock %}

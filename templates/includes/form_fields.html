@@ -1,0 +1,25 @@
+{% load form_tags %}
+{# Campos de um formulário no padrão Bootstrap. Uso: {% include "includes/form_fields.html" with form=form %} #}
+{% for error in form.non_field_errors %}
+  <div class="alert alert-danger">{{ error }}</div>
+{% endfor %}
+{% for field in form.hidden_fields %}{{ field }}{% endfor %}
+{% for field in form.visible_fields %}
+  <div class="mb-3">
+    {% if field.widget_type == "checkbox" %}
+      <div class="form-check">
+        {{ field|bootstrap }}
+        <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+      </div>
+    {% else %}
+      <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+      {{ field|bootstrap }}
+    {% endif %}
+    {% for error in field.errors %}
+      <div class="invalid-feedback d-block">{{ error }}</div>
+    {% endfor %}
+    {% if field.help_text %}
+      <div class="form-text">{{ field.help_text }}</div>
+    {% endif %}
+  </div>
+{% endfor %}

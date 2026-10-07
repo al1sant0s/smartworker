@@ -1,0 +1,17 @@
+{% extends "two_factor/_base.html" %}
+{# Páginas da conta (usuário logado): layout do sistema com o conteúdo num card #}
+
+{% block page_title %}Segurança da conta{% endblock %}
+
+{% block content_wrapper %}
+  <div class="row">
+    <div class="col-lg-8 col-xl-6">
+      <div class="card">
+        <div class="card-header"><h3 class="card-title">{% block card_title %}{% endblock %}</h3></div>
+        <div class="card-body">
+          {% block content %}{% endblock %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "two_factor/_account.html" %}
+
+{% block title %}Autenticação ativada | Smartworker{% endblock %}
+{% block card_title %}Autenticação em dois fatores ativada{% endblock %}
+
+{% block content %}
+  <div class="alert alert-success">
+    <i class="bi bi-check-circle me-1"></i>Pronto! A partir de agora o login pedirá o código do app autenticador.
+  </div>
+  <p>Gere códigos de backup e guarde-os em lugar seguro, para entrar caso perca o acesso ao celular.</p>
+  <div class="d-flex gap-2">
+    <a href="{% url 'two_factor:backup_tokens' %}" class="btn btn-primary"><i class="bi bi-key me-1"></i>Gerar códigos de backup</a>
+    <a href="{% url 'two_factor:profile' %}" class="btn btn-link">Voltar para segurança da conta</a>
+  </div>
+{% endblock %}

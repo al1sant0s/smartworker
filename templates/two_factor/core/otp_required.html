@@ -1,0 +1,12 @@
+{% extends "two_factor/_account.html" %}
+
+{% block title %}Autenticação em dois fatores necessária | Smartworker{% endblock %}
+{% block card_title %}Autenticação em dois fatores necessária{% endblock %}
+
+{% block content %}
+  <p>Esta página exige autenticação em dois fatores, que ainda não está ativada na sua conta.</p>
+  <div class="d-flex gap-2">
+    <a href="{% url 'two_factor:setup' %}" class="btn btn-primary"><i class="bi bi-shield-lock me-1"></i>Ativar agora</a>
+    <a href="javascript:history.back()" class="btn btn-link">Voltar</a>
+  </div>
+{% endblock %}
