@@ -1,7 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{% if object %}{{ object.name }}{% else %}Novo empreendimento{% endif %} | Smartworker{% endblock %}
 {% block page_title %}{% if object %}Editar empreendimento{% else %}Novo empreendimento{% endif %}{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/address.js' %}"></script>
+{% endblock %}
 
 {% block content %}
   <div class="row">
@@ -10,7 +15,38 @@
         <form method="post" novalidate>
           {% csrf_token %}
           <div class="card-body">
-            {% include "includes/form_fields.html" %}
+            {% include "includes/form_errors.html" %}
+
+            <div class="row">
+              <div class="col-md-7">{% include "includes/form_field.html" with field=form.name %}</div>
+              <div class="col-md-5">{% include "includes/form_field.html" with field=form.company %}</div>
+            </div>
+
+            <h5 class="mt-2 mb-3">Endereço</h5>
+            <div class="row">
+              <div class="col-md-4">{% include "includes/form_field.html" with field=form.cep %}</div>
+              <div class="col-md-8">{% include "includes/form_field.html" with field=form.street %}</div>
+              <div class="col-md-4">{% include "includes/form_field.html" with field=form.number %}</div>
+              <div class="col-md-8">{% include "includes/form_field.html" with field=form.complement %}</div>
+              <div class="col-md-5">{% include "includes/form_field.html" with field=form.district %}</div>
+              <div class="col-md-2">{% include "includes/form_field.html" with field=form.state %}</div>
+              <div class="col-md-5">{% include "includes/form_field.html" with field=form.city %}</div>
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.latitude %}</div>
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.longitude %}</div>
+            </div>
+
+            <h5 class="mt-2 mb-3">Lote</h5>
+            <div class="row">
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.cartographic_id %}</div>
+              <div class="col-md-3">{% include "includes/form_field.html" with field=form.block %}</div>
+              <div class="col-md-3">{% include "includes/form_field.html" with field=form.lot %}</div>
+            </div>
+
+            <h5 class="mt-2 mb-3">Vendas</h5>
+            <div class="row">
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.sales_start %}</div>
+              <div class="col-md-6">{% include "includes/form_field.html" with field=form.delivery_date %}</div>
+            </div>
           </div>
           <div class="card-footer d-flex gap-2">
             <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button>
@@ -19,5 +55,33 @@
         </form>
       </div>
     </div>
+
+    {% if object %}
+      <div class="col-lg-4 col-xl-6">
+        <div class="card">
+          <div class="card-header d-flex align-items-center">
+            <h3 class="card-title mb-0">Histórico de situação</h3>
+            <a href="{% url 'management:estate_event_create' object.pk %}" class="btn btn-primary btn-sm ms-auto">
+              <i class="bi bi-arrow-repeat me-1"></i>Alterar situação
+            </a>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for event in tracking_events %}
+              <li class="list-group-item">
+                <div class="d-flex align-items-center gap-2">
+                  {% include "management/includes/status_badge.html" with status=event.status label=event.get_status_display %}
+                  <span>{{ event.date|date:"d/m/Y" }}</span>
+                  {% if forloop.first %}<span class="text-body-secondary small">(atual)</span>{% endif %}
+                </div>
+                {% if event.note %}<div class="mt-1">{{ event.note|linebreaksbr }}</div>{% endif %}
+                <div class="small text-body-secondary mt-1">
+                  Registrado por {{ event.created_by|default:"sistema" }} em {{ event.created_at|date:"d/m/Y H:i" }}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}

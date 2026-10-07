@@ -1,0 +1,2 @@
+{# Badge da situação do empreendimento. Uso: include com status=<valor> label=<texto> #}
+<span class="badge {% if status == 'ACTIVE' %}text-bg-success{% elif status == 'SOLD_OUT' %}text-bg-primary{% elif status == 'PAUSED' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ label }}</span>

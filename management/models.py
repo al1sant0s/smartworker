@@ -110,6 +110,55 @@ class Facility(models.Model):
         return self.display_name
 
 
+class State(models.TextChoices):
+    """Unidades federativas (UF)."""
+
+    AC = "AC", "Acre"
+    AL = "AL", "Alagoas"
+    AP = "AP", "Amapá"
+    AM = "AM", "Amazonas"
+    BA = "BA", "Bahia"
+    CE = "CE", "Ceará"
+    DF = "DF", "Distrito Federal"
+    ES = "ES", "Espírito Santo"
+    GO = "GO", "Goiás"
+    MA = "MA", "Maranhão"
+    MT = "MT", "Mato Grosso"
+    MS = "MS", "Mato Grosso do Sul"
+    MG = "MG", "Minas Gerais"
+    PA = "PA", "Pará"
+    PB = "PB", "Paraíba"
+    PR = "PR", "Paraná"
+    PE = "PE", "Pernambuco"
+    PI = "PI", "Piauí"
+    RJ = "RJ", "Rio de Janeiro"
+    RN = "RN", "Rio Grande do Norte"
+    RS = "RS", "Rio Grande do Sul"
+    RO = "RO", "Rondônia"
+    RR = "RR", "Roraima"
+    SC = "SC", "Santa Catarina"
+    SP = "SP", "São Paulo"
+    SE = "SE", "Sergipe"
+    TO = "TO", "Tocantins"
+
+
+class City(models.Model):
+    """Município, identificado pelo código do IBGE (carregado de data/municipios.json)."""
+
+    ibge_code = models.PositiveIntegerField(primary_key=True, verbose_name="Código IBGE")
+    name = models.CharField(max_length=64, verbose_name="Nome")
+    state = models.CharField(max_length=2, choices=State, verbose_name="UF")
+
+    class Meta:
+        verbose_name = "Município"
+        verbose_name_plural = "Municípios"
+        ordering = ["name"]
+        indexes = [models.Index(fields=["state", "name"])]
+
+    def __str__(self):
+        return f"{self.name}/{self.state}"
+
+
 class Estate(models.Model):
     """Modelo do Empreendimento"""
 
@@ -117,15 +166,44 @@ class Estate(models.Model):
     company = models.ForeignKey(
         "Company", on_delete=models.CASCADE, verbose_name="Construtora"
     )
-    address = models.TextField(verbose_name="Endereço")
+
+    # Endereço (a UF vem do município)
+    cep = models.CharField(
+        max_length=9, verbose_name="CEP", help_text="Com ou sem traço (ex: 88015-200)"
+    )
+    street = models.CharField(max_length=128, verbose_name="Logradouro")
+    number = models.CharField(
+        max_length=16, verbose_name="Número", help_text="Use “s/n” se não houver"
+    )
+    complement = models.CharField(
+        max_length=64, blank=True, default="", verbose_name="Complemento"
+    )
+    district = models.CharField(max_length=64, verbose_name="Bairro")
+    city = models.ForeignKey(
+        City, on_delete=models.PROTECT, related_name="estates", verbose_name="Município"
+    )
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(Decimal("-90")), MaxValueValidator(Decimal("90"))],
+        verbose_name="Latitude",
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(Decimal("-180")), MaxValueValidator(Decimal("180"))],
+        verbose_name="Longitude",
+    )
+
     cartographic_id = models.CharField(
         max_length=32, verbose_name="Identificação cartográfica", blank=True, null=True
     )
     block = models.PositiveIntegerField(verbose_name="Quadra", blank=True, null=True)
     lot = models.PositiveIntegerField(verbose_name="Lote", blank=True, null=True)
-    sea_distance = models.PositiveIntegerField(
-        verbose_name="Distância ao mar (metros)", blank=True, null=True
-    )
     sales_start = models.DateField(verbose_name="Início das vendas")
     delivery_date = models.DateField(verbose_name="Data da entrega")
 
@@ -143,11 +221,37 @@ class Estate(models.Model):
 
     def clean(self):
         super().clean()
+        errors = {}
+
+        if self.cep:
+            # Guarda só os dígitos, como no CNPJ (ex: "88015-200" vira "88015200")
+            self.cep = re.sub(r"\D", "", self.cep)
+            if len(self.cep) != 8:
+                errors["cep"] = "O CEP deve ter 8 dígitos."
+
+        if (self.latitude is None) != (self.longitude is None):
+            errors["longitude" if self.longitude is None else "latitude"] = (
+                "Informe latitude e longitude juntas."
+            )
+
         # Datas inválidas já geraram erro próprio em clean_fields()
         if self.sales_start and self.delivery_date and self.delivery_date <= self.sales_start:
-            raise ValidationError(
-                {"delivery_date": "A data da entrega deve ser posterior ao início das vendas."}
-            )
+            errors["delivery_date"] = "A data da entrega deve ser posterior ao início das vendas."
+
+        if errors:
+            raise ValidationError(errors)
+
+    @property
+    def cep_display(self):
+        """CEP com traço para exibição (ex: '88015-200')."""
+        return f"{self.cep[:5]}-{self.cep[5:]}" if len(self.cep) == 8 else self.cep
+
+    @property
+    def address_display(self):
+        """Endereço em uma linha (ex: 'Rua X, 100, Torre B - Centro, Florianópolis/SC')."""
+        parts = [self.street, self.number, self.complement]
+        line = ", ".join(p for p in parts if p)
+        return f"{line} - {self.district}, {self.city}"
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding

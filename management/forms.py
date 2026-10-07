@@ -1,6 +1,7 @@
 from django import forms
+from django.urls import reverse
 
-from .models import Company, Estate
+from .models import City, Company, Estate, State, TrackingEvent
 
 
 class CompanyForm(forms.ModelForm):
@@ -23,6 +24,14 @@ class CompanyForm(forms.ModelForm):
 
 
 class EstateForm(forms.ModelForm):
+    # A UF não é campo do modelo (vem do município); serve para filtrar os municípios
+    state = forms.ChoiceField(
+        choices=[("", "---------"), *State.choices],
+        label="UF",
+        # Ligado ao script de endereço (busca de CEP e lista de municípios)
+        widget=forms.Select(attrs={"data-address": "state"}),
+    )
+
     class Meta:
         model = Estate
         # As estruturas (facilities) têm dados próprios na tabela intermediária
@@ -30,16 +39,31 @@ class EstateForm(forms.ModelForm):
         fields = [
             "name",
             "company",
-            "address",
+            "cep",
+            "street",
+            "number",
+            "complement",
+            "district",
+            "state",
+            "city",
+            "latitude",
+            "longitude",
             "cartographic_id",
             "block",
             "lot",
-            "sea_distance",
             "sales_start",
             "delivery_date",
         ]
         widgets = {
-            "address": forms.Textarea(attrs={"rows": 2}),
+            "cep": forms.TextInput(
+                attrs={"placeholder": "88015-200", "inputmode": "numeric", "data-address": "cep"}
+            ),
+            "street": forms.TextInput(attrs={"data-address": "street"}),
+            "number": forms.TextInput(attrs={"data-address": "number"}),
+            "district": forms.TextInput(attrs={"data-address": "district"}),
+            "city": forms.Select(attrs={"data-address": "city"}),
+            "latitude": forms.NumberInput(attrs={"step": "0.000001", "placeholder": "-27.595378"}),
+            "longitude": forms.NumberInput(attrs={"step": "0.000001", "placeholder": "-48.548050"}),
             # O seletor de data do navegador exige o formato ISO
             "sales_start": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "delivery_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -48,3 +72,42 @@ class EstateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["company"].queryset = Company.objects.order_by("name")
+
+        # UF escolhida: a enviada no formulário ou a do município já salvo
+        if self.is_bound:
+            state = self.data.get(self.add_prefix("state"), "")
+        elif self.instance.pk:
+            state = self.instance.city.state
+            self.initial["state"] = state
+            self.initial["cep"] = self.instance.cep_display
+        else:
+            state = ""
+
+        # Só os municípios da UF; assim um município de outra UF não é aceito
+        self.fields["city"].queryset = City.objects.filter(state=state)
+
+        url = reverse("management:city_list")
+        self.fields["state"].widget.attrs["data-cities-url"] = url
+
+
+class TrackingEventForm(forms.ModelForm):
+    """Registra uma mudança de situação. A instância já chega com o empreendimento."""
+
+    class Meta:
+        model = TrackingEvent
+        fields = ["status", "date", "note"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "note": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Ex: unidades voltaram à venda após distrato"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A situação atual não é uma mudança; o clean() do modelo também bloqueia
+        current = self.instance.estate.tracking_events.first()
+        if current:
+            self.fields["status"].choices = [
+                choice for choice in self.fields["status"].choices if choice[0] != current.status
+            ]

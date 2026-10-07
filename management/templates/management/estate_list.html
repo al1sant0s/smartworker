@@ -19,6 +19,7 @@
               <tr>
                 <th>Nome</th>
                 <th>Construtora</th>
+                <th>Município</th>
                 <th>Início das vendas</th>
                 <th>Entrega</th>
                 <th>Situação</th>
@@ -29,10 +30,11 @@
                 <tr>
                   <td><a href="{% url 'management:estate_update' estate.pk %}">{{ estate.name }}</a></td>
                   <td>{{ estate.company.name }}</td>
+                  <td class="text-nowrap">{{ estate.city }}</td>
                   <td>{{ estate.sales_start|date:"d/m/Y" }}</td>
                   <td>{{ estate.delivery_date|date:"d/m/Y" }}</td>
                   <td>
-                    <span class="badge {% if estate.status == 'ACTIVE' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ estate.status_label }}</span>
+                    {% include "management/includes/status_badge.html" with status=estate.status label=estate.status_label %}
                   </td>
                 </tr>
               {% endfor %}
