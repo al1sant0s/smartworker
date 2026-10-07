@@ -29,14 +29,24 @@
                     <a href="tel:{{ source.phone }}">{{ source.phone.as_national }}</a>
                   {% endif %}
                   {% if source.description %}<div class="small text-body-secondary">{{ source.description }}</div>{% endif %}
+                  {% if source.estate_count > 1 %}<div class="small text-body-secondary"><i class="bi bi-diagram-3 me-1"></i>Usada em {{ source.estate_count }} empreendimentos</div>{% endif %}
                 </div>
                 <form method="post" onsubmit="return confirm('Desvincular esta fonte do empreendimento?')">
                   {% csrf_token %}
                   <input type="hidden" name="kind" value="{{ section.kind }}">
                   <input type="hidden" name="action" value="unlink">
                   <input type="hidden" name="source" value="{{ source.pk }}">
-                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Desvincular" aria-label="Desvincular">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary" title="Desvincular deste empreendimento" aria-label="Desvincular">
                     <i class="bi bi-x-lg"></i>
+                  </button>
+                </form>
+                <form method="post" onsubmit="return confirm('Excluir esta fonte?{% if source.estate_count > 1 %} Ela será removida dos {{ source.estate_count }} empreendimentos que a usam.{% endif %}')">
+                  {% csrf_token %}
+                  <input type="hidden" name="kind" value="{{ section.kind }}">
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="source" value="{{ source.pk }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir fonte" aria-label="Excluir">
+                    <i class="bi bi-trash"></i>
                   </button>
                 </form>
               </li>

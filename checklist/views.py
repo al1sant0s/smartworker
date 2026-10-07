@@ -101,7 +101,11 @@ class EstateSourcesView(TemplateView):
                 "kind": kind,
                 "title": config["title"],
                 "icon": config["icon"],
-                "sources": getattr(self.estate, config["related"]).all(),
+                # estate_count: em quantos empreendimentos a fonte é usada (aviso ao excluir)
+                # (contar direto em estate.<related> só veria este empreendimento, por causa do filtro)
+                "sources": config["model"]
+                .objects.filter(pk__in=getattr(self.estate, config["related"]).values("pk"))
+                .annotate(estate_count=Count("estates")),
                 "new_form": self.bound_forms.get((kind, "new")) or self.new_form(kind),
                 "link_form": self.bound_forms.get((kind, "link")) or self.link_form(kind),
             }
@@ -138,6 +142,13 @@ class EstateSourcesView(TemplateView):
             source = get_object_or_404(related, pk=request.POST.get("source"))
             related.remove(source)
             messages.success(request, f"{source} desvinculado deste empreendimento.")
+            return redirect(self.success_url(kind))
+
+        elif action == "delete":
+            # Excluir remove a fonte de todos os empreendimentos que a usam
+            source = get_object_or_404(related, pk=request.POST.get("source"))
+            source.delete()
+            messages.success(request, f"{source} excluído.")
             return redirect(self.success_url(kind))
 
         else:
@@ -295,6 +306,20 @@ class CheckListDetailView(SuccessMessageMixin, UpdateView):
     @staticmethod
     def object_url(checklist):
         return reverse("checklist:checklist_detail", args=[checklist.pk])
+
+
+class CheckListDeleteView(DeleteView):
+    """Exclui um checklist e seus arquivos (o django-cleanup apaga os arquivos do disco)."""
+
+    model = CheckList
+    http_method_names = ["post"]
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Checklist de {self.object} excluído.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return f"{reverse('checklist:checklist_list')}?month={self.object.reference_month:%Y-%m}"
 
 
 class AvailabilitySheetDeleteView(DeleteView):

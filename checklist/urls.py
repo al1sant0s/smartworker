@@ -7,6 +7,7 @@ urlpatterns = [
     path("", views.CheckListListView.as_view(), name="checklist_list"),
     path("generate/", views.CheckListGenerateView.as_view(), name="checklist_generate"),
     path("<int:pk>/", views.CheckListDetailView.as_view(), name="checklist_detail"),
+    path("<int:pk>/delete/", views.CheckListDeleteView.as_view(), name="checklist_delete"),
     path(
         "sheets/<int:pk>/delete/",
         views.AvailabilitySheetDeleteView.as_view(),
