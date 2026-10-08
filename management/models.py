@@ -63,7 +63,7 @@ class Company(models.Model):
         verbose_name="CNPJ",
         help_text="Com ou sem pontuação (ex: 12.345.678/0001-95)",
     )
-    name = models.CharField(max_length=64, verbose_name="Nome")
+    name = models.CharField(max_length=150, verbose_name="Nome")
     email = models.EmailField(unique=True, blank=True, null=True)
     phone = PhoneNumberField(
         unique=True, blank=True, null=True, region="BR", verbose_name="Telefone"

@@ -1,7 +1,12 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{% if object %}{{ object.name }}{% else %}Nova construtora{% endif %} | Smartworker{% endblock %}
 {% block page_title %}{% if object %}Editar construtora{% else %}Nova construtora{% endif %}{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'management/js/cnpj_lookup.js' %}"></script>
+{% endblock %}
 
 {% block content %}
   <div class="row">

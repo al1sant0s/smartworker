@@ -16,9 +16,12 @@ from .models import (
 class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
-        fields = ["name", "cnpj", "email", "phone"]
+        # CNPJ primeiro: ao ser preenchido, busca os demais dados na BrasilAPI
+        fields = ["cnpj", "name", "email", "phone"]
         widgets = {
-            "cnpj": forms.TextInput(attrs={"placeholder": "12.345.678/0001-95"}),
+            "cnpj": forms.TextInput(
+                attrs={"placeholder": "12.345.678/0001-95", "data-cnpj-lookup": ""}
+            ),
             "email": forms.EmailInput(attrs={"placeholder": "contato@construtora.com.br"}),
             "phone": forms.TextInput(attrs={"placeholder": "(11) 91234-5678", "type": "tel"}),
         }
