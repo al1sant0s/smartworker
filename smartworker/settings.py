@@ -43,6 +43,12 @@ CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS", default=["http://localhost:8000", "http://127.0.0.1:8000"]
 )
 
+# Atrás de um proxy que termina o HTTPS (ex: Railway), confia no cabeçalho
+# X-Forwarded-Proto para saber se a requisição original era segura.
+# Só ative se o proxy sempre define esse cabeçalho.
+if env.bool("TRUST_X_FORWARDED_PROTO", default=False):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 # ==============================================================================
 # 3. APPLICATION DEFINITION & CORE ARCHITECTURE

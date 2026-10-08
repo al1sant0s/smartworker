@@ -22,4 +22,5 @@ EXPOSE 8000
 
 # O entrypoint da imagem micromamba já ativa o ambiente base
 # collectstatic roda na subida porque STATIC_ROOT é uma pasta do host (nginx)
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn smartworker.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
+# PORT é definida por plataformas como o Railway; sem ela, usa 8000
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn smartworker.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]

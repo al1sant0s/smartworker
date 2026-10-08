@@ -41,6 +41,23 @@ services:
         - action: rebuild
           path: Dockerfile
 
+  # Cria os checklists do mês; roda todo dia e não faz nada se já existirem
+  scheduler:
+    build: .
+    user: "${UID:-1000}:${GID:-1000}"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+      # O web aplica as migrações na subida; se o comando falhar antes disso,
+      # tenta de novo em 1 minuto
+      web:
+        condition: service_started
+    restart: unless-stopped
+    command: sh -c "while true; do python manage.py create_monthly_checklists && sleep 86400 || sleep 60; done"
+
   db:
     image: postgres:17
     env_file: .env

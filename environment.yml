@@ -16,6 +16,9 @@ dependencies:
   - django-cleanup=9.0
   - qrcode=8.1
   - django-formtools=2.7
+  # Arquivos de mídia em S3 (ou serviço compatível), via STORAGE_DEFAULT=s3://
+  - django-storages=1.14
+  - boto3=1.43
   - pip
   - pip:
       # Não disponível no conda-forge
