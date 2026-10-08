@@ -86,8 +86,10 @@ Para desenvolver com recarga automática: `docker compose watch`.
 O Railway não usa o `compose.yaml`; cada parte vira um serviço:
 
 1. **Postgres**: adicione o banco do Railway.
-2. **Bucket**: um Railway Bucket ou um S3 próprio, para a mídia (o disco do
-   container é apagado a cada deploy).
+2. **Bucket**: um [Railway Bucket](https://docs.railway.com/storage-buckets)
+   (compatível com S3) ou um S3 próprio, para a mídia (o disco do container é
+   apagado a cada deploy). O bucket é privado; os links das planilhas são URLs
+   assinadas.
 3. **Web**: serviço a partir deste repositório (usa o `Dockerfile`; o gunicorn
    escuta em `$PORT`). Variáveis:
    - `DATABASE_URL` (referência ao Postgres)
@@ -95,9 +97,16 @@ O Railway não usa o `compose.yaml`; cada parte vira um serviço:
    - `ALLOWED_HOSTS=<app>.up.railway.app`
    - `CSRF_TRUSTED_ORIGINS=https://<app>.up.railway.app`
    - `TRUST_X_FORWARDED_PROTO=1`
-   - `STORAGE_DEFAULT=s3://?bucket_name=<bucket>`
-   - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`,
-     `AWS_ENDPOINT_URL`
+   - `STORAGE_DEFAULT` e as credenciais do bucket, por referência ao serviço
+     do bucket (troque `Bucket` pelo nome dele no Railway):
+
+     ```
+     STORAGE_DEFAULT=s3://?bucket_name=${{Bucket.AWS_S3_BUCKET_NAME}}&addressing_style=virtual
+     AWS_ENDPOINT_URL=${{Bucket.AWS_ENDPOINT_URL}}
+     AWS_ACCESS_KEY_ID=${{Bucket.AWS_ACCESS_KEY_ID}}
+     AWS_SECRET_ACCESS_KEY=${{Bucket.AWS_SECRET_ACCESS_KEY}}
+     AWS_DEFAULT_REGION=${{Bucket.AWS_DEFAULT_REGION}}
+     ```
 4. **Cron**: outro serviço do mesmo repositório, com as mesmas variáveis,
    comando `python manage.py create_monthly_checklists` e agendamento
    `0 6 * * *` (UTC). Substitui o serviço `scheduler` do Compose.
