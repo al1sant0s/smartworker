@@ -26,7 +26,7 @@
           <li class="nav-item dropdown">
             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
               <i class="bi bi-person-circle me-1"></i>
-              {{ user.get_full_name|default:user.username }}
+              {{ user.get_full_name|default:user.email }}
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="{% url 'two_factor:profile' %}"><i class="bi bi-shield-lock me-2"></i>Segurança da conta</a></li>

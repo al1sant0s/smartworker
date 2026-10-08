@@ -134,11 +134,10 @@ class FacilityForm(forms.ModelForm):
 class EstateFacilityForm(forms.ModelForm):
     class Meta:
         model = EstateFacility
-        fields = ["facility", "quantity", "area", "floor"]
+        fields = ["facility", "quantity", "total_area"]
         widgets = {
             "quantity": forms.NumberInput(attrs={"min": 1}),
-            "area": forms.NumberInput(attrs={"step": "0.01", "min": 0}),
-            "floor": forms.NumberInput(attrs={"step": 1, "placeholder": "0 = térreo"}),
+            "total_area": forms.NumberInput(attrs={"step": "0.01", "min": 0}),
         }
 
 

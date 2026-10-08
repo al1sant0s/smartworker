@@ -12,12 +12,8 @@
     {% for error in form.quantity.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
   </td>
   <td style="width: 8rem">
-    {{ form.area|bootstrap }}
-    {% for error in form.area.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-  </td>
-  <td>
-    {{ form.floor|bootstrap }}
-    {% for error in form.floor.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+    {{ form.total_area|bootstrap }}
+    {% for error in form.total_area.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
   </td>
   <td class="text-center align-middle">
     {% if form.instance.pk %}

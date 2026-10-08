@@ -19,9 +19,27 @@ admin.site.index_title = "Administração"
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    fieldsets = UserAdmin.fieldsets + (("Contato", {"fields": ["phone"]}),)
-    add_fieldsets = UserAdmin.add_fieldsets + (("Contato", {"fields": ["email", "phone"]}),)
-    list_display = ["username", "email", "first_name", "last_name", "is_staff"]
+    fieldsets = (
+        (None, {"fields": ["email", "password"]}),
+        ("Dados pessoais", {"fields": ["first_name", "last_name", "phone"]}),
+        (
+            "Permissões",
+            {"fields": ["is_active", "is_staff", "is_superuser", "groups", "user_permissions"]},
+        ),
+        ("Datas", {"fields": ["last_login", "date_joined"]}),
+    )
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ["wide"],
+                "fields": ["email", "phone", "usable_password", "password1", "password2"],
+            },
+        ),
+    )
+    list_display = ["email", "first_name", "last_name", "is_staff"]
+    search_fields = ["email", "first_name", "last_name"]
+    ordering = ["email"]
 
 
 @admin.register(Company)

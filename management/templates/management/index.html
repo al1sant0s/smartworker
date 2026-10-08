@@ -6,7 +6,7 @@
 {% block content %}
   <div class="card">
     <div class="card-body">
-      Bem-vindo, {{ user.get_full_name|default:user.username }}.
+      Bem-vindo, {{ user.get_full_name|default:user.email }}.
     </div>
   </div>
 {% endblock %}

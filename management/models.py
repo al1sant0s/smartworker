@@ -3,7 +3,7 @@ import unicodedata
 from decimal import Decimal
 
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -12,11 +12,42 @@ from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
 
 
+class CustomUserManager(UserManager):
+    """Usuários identificados pelo e-mail, sem username."""
+
+    def _create_user(self, email, password, **extra_fields):
+        if not email:
+            raise ValueError("O e-mail é obrigatório.")
+        user = self.model(email=self.normalize_email(email), **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(email, password, **extra_fields)
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        if not extra_fields["is_staff"] or not extra_fields["is_superuser"]:
+            raise ValueError("Superusuário precisa de is_staff e is_superuser.")
+        return self._create_user(email, password, **extra_fields)
+
+
 class CustomUser(AbstractUser):
-    email = models.EmailField(unique=True)
+    # O login é feito pelo e-mail
+    username = None
+    email = models.EmailField(unique=True, verbose_name="E-mail")
     phone = PhoneNumberField(
         unique=True, blank=True, null=True, region="BR", verbose_name="Telefone"
     )
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
 
 
 class Company(models.Model):
@@ -395,22 +426,32 @@ class EstateFacility(models.Model):
     )
 
     # Detalhes específicos dessa estrutura neste empreendimento
-    quantity = models.PositiveIntegerField(default=1, verbose_name="Quantidade")
-    area = models.DecimalField(
-        max_digits=8, decimal_places=2, blank=True, null=True, verbose_name="Área (m²)"
+    quantity = models.PositiveIntegerField(
+        default=1, validators=[MinValueValidator(1)], verbose_name="Quantidade"
     )
-    # 0 = térreo; negativos = subsolos (ex: -1 = 1º subsolo)
-    floor = models.IntegerField(
+    total_area = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
         blank=True,
         null=True,
-        verbose_name="Pavimento / Andar",
-        help_text="0 = térreo; negativo = subsolo",
+        validators=[MinValueValidator(Decimal("0.00"))],
+        verbose_name="Área total (m²)",
     )
 
     class Meta:
         verbose_name = "Estrutura do Empreendimento"
         verbose_name_plural = "Estruturas do Empreendimento"
         unique_together = ("estate", "facility")
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gte=1),
+                name="estatefacility_quantity_positive",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(total_area__isnull=True) | models.Q(total_area__gte=0),
+                name="estatefacility_total_area_non_negative",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.facility.label} em {self.estate.name}"

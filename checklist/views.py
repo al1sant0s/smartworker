@@ -174,7 +174,7 @@ class CheckListListView(SearchMixin, ListView):
         "estate__name",
         "estate__company__name",
         "estate__city__name",
-        "checked_by__username",
+        "checked_by__email",
     ]
 
     def get(self, request, *args, **kwargs):
