@@ -5,6 +5,7 @@ from . import views
 app_name = "management"
 urlpatterns = [
     path("", views.IndexView.as_view(), name="index"),
+    path("profile/password/", views.ProfilePasswordChangeView.as_view(), name="password_change"),
     path("cities/", views.CityListView.as_view(), name="city_list"),
     path("company/list/", views.CompanyListView.as_view(), name="company_list"),
     path("company/new/", views.CompanyCreateView.as_view(), name="company_create"),

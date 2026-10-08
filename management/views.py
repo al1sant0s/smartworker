@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth.views import PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import transaction
 from django.db.models import Count, OuterRef, Subquery
@@ -33,6 +34,17 @@ class CityListView(View):
             return JsonResponse({"error": "UF inválida."}, status=400)
         cities = City.objects.filter(state=state).order_by("name").values("ibge_code", "name")
         return JsonResponse({"cities": list(cities)})
+
+
+# Senha ------------------------------------------------------------------------
+
+
+class ProfilePasswordChangeView(SuccessMessageMixin, PasswordChangeView):
+    """Troca de senha: pede a senha atual e a nova duas vezes. Mantém o usuário logado."""
+
+    template_name = "management/password_change_form.html"
+    success_url = reverse_lazy("two_factor:profile")
+    success_message = "Senha alterada."
 
 
 # Construtoras ------------------------------------------------------------------

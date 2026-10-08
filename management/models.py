@@ -49,6 +49,12 @@ class CustomUser(AbstractUser):
 
     objects = CustomUserManager()
 
+    def __str__(self):
+        # Usado nos registros (verificado por, registrado por): o nome é
+        # definido só pelo admin e o e-mail identifica a pessoa sem ambiguidade
+        name = self.get_full_name()
+        return f"{name} ({self.email})" if name else self.email
+
 
 class Company(models.Model):
     cnpj = models.CharField(
