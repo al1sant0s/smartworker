@@ -106,9 +106,9 @@ class CheckList(models.Model):
     class StatusCheck(models.TextChoices):
         PENDING = "PENDING", _("Pendente")
         AVAILABLE = "AVAILABLE", _("Disponível")
+        UNAVAILABLE = "UNAVAILABLE", _("Indisponível")
         UP_TO_DATE = "UP_TO_DATE", _("Atualizado")
         OUTDATED = "OUTDATED", _("Desatualizado")
-        UNAVAILABLE = "UNAVAILABLE", _("Indisponível")
 
     estate = models.ForeignKey(
         Estate, on_delete=models.CASCADE, verbose_name="Empreendimento"
