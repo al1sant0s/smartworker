@@ -83,7 +83,9 @@ class CheckListQuerySet(models.QuerySet):
         Retorna os checklists criados.
         """
         reference_month = reference_month.replace(day=1)
-        existing = CheckList.objects.filter(reference_month=reference_month).values("estate_id")
+        existing = CheckList.objects.filter(reference_month=reference_month).values(
+            "estate_id"
+        )
         events = TrackingEvent.objects.tracked().exclude(estate_id__in=existing)
         return CheckList.objects.bulk_create(
             [
@@ -103,10 +105,10 @@ class CheckList(models.Model):
 
     class StatusCheck(models.TextChoices):
         PENDING = "PENDING", _("Pendente")
+        AVAILABLE = "AVAILABLE", _("Disponível")
         UP_TO_DATE = "UP_TO_DATE", _("Atualizado")
         OUTDATED = "OUTDATED", _("Desatualizado")
         UNAVAILABLE = "UNAVAILABLE", _("Indisponível")
-        AVAILABLE = "AVAILABLE", _("Disponível")
 
     estate = models.ForeignKey(
         Estate, on_delete=models.CASCADE, verbose_name="Empreendimento"
@@ -162,7 +164,9 @@ IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif"]
 def availability_sheet_path(instance, filename):
     # Ex: checklists/12/2026-10/tabela-precos.pdf
     checklist = instance.checklist
-    return f"checklists/{checklist.estate_id}/{checklist.reference_month:%Y-%m}/{filename}"
+    return (
+        f"checklists/{checklist.estate_id}/{checklist.reference_month:%Y-%m}/{filename}"
+    )
 
 
 class AvailabilitySheet(models.Model):
@@ -177,10 +181,9 @@ class AvailabilitySheet(models.Model):
     file = models.FileField(
         "Arquivo",
         upload_to=availability_sheet_path,
-        validators=[
-            FileExtensionValidator(DOCUMENT_EXTENSIONS + IMAGE_EXTENSIONS)
-        ],
-        help_text="Formatos aceitos: " + ", ".join(DOCUMENT_EXTENSIONS + IMAGE_EXTENSIONS),
+        validators=[FileExtensionValidator(DOCUMENT_EXTENSIONS + IMAGE_EXTENSIONS)],
+        help_text="Formatos aceitos: "
+        + ", ".join(DOCUMENT_EXTENSIONS + IMAGE_EXTENSIONS),
     )
     uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Enviado em")
 
