@@ -106,6 +106,7 @@ class CheckList(models.Model):
         UP_TO_DATE = "UP_TO_DATE", _("Atualizado")
         OUTDATED = "OUTDATED", _("Desatualizado")
         UNAVAILABLE = "UNAVAILABLE", _("Indisponível")
+        AVAILABLE = "AVAILABLE", _("Disponível")
 
     estate = models.ForeignKey(
         Estate, on_delete=models.CASCADE, verbose_name="Empreendimento"

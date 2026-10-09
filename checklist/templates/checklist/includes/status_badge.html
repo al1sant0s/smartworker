@@ -1,2 +1,2 @@
 {# Badge da situação do checklist. Uso: include com status=<valor> label=<texto> #}
-<span class="badge {% if status == 'UP_TO_DATE' %}text-bg-success{% elif status == 'OUTDATED' %}text-bg-warning{% elif status == 'UNAVAILABLE' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ label }}</span>
+<span class="badge {% if status == 'UP_TO_DATE' %}text-bg-success{% elif status == 'OUTDATED' %}text-bg-warning{% elif status == 'UNAVAILABLE' %}text-bg-danger{% elif status == 'AVAILABLE' %}text-bg-info{% else %}text-bg-secondary{% endif %}">{{ label }}</span>
