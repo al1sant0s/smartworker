@@ -84,6 +84,38 @@
                 <span class="small text-body-secondary">Estrutura não está na lista? Peça a um administrador para cadastrá-la.</span>
               {% endif %}
             </div>
+
+            <h5 class="mt-4 mb-3">Condições de pagamento</h5>
+            {{ payment_terms_formset.management_form }}
+            {% for error in payment_terms_formset.non_form_errors %}
+              <div class="alert alert-danger">{{ error }}</div>
+            {% endfor %}
+            <div class="table-responsive">
+              <table class="table table-sm align-top mb-2">
+                <thead>
+                  <tr>
+                    <th>Sinal (%)</th>
+                    <th>Chaves/habite-se (%)</th>
+                    <th>Mensais (%)</th>
+                    <th>Mensais (parc.)</th>
+                    <th>Intercaladas (%)</th>
+                    <th>Intercaladas (parc.)</th>
+                    <th class="text-center">Remover</th>
+                  </tr>
+                </thead>
+                <tbody id="payment_terms-body">
+                  {% for terms_form in payment_terms_formset %}
+                    {% include "management/includes/payment_terms_row.html" with form=terms_form %}
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <template id="payment_terms-empty">
+              {% include "management/includes/payment_terms_row.html" with form=payment_terms_formset.empty_form %}
+            </template>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-formset-add="payment_terms">
+              <i class="bi bi-plus-lg me-1"></i>Adicionar condição
+            </button>
           </div>
           <div class="card-footer d-flex gap-2">
             <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button>
@@ -120,31 +152,6 @@
                   Registrado por {{ event.created_by|default:"sistema" }} em {{ event.created_at|date:"d/m/Y H:i" }}
                 </div>
               </li>
-            {% endfor %}
-          </ul>
-        </div>
-
-        <div class="card mt-4">
-          <div class="card-header d-flex align-items-center">
-            <h3 class="card-title mb-0">Condições de pagamento</h3>
-            <a href="{% url 'management:estate_payment_terms_create' object.pk %}" class="btn btn-primary btn-sm ms-auto">
-              <i class="bi bi-plus-lg me-1"></i>Nova condição
-            </a>
-          </div>
-          <ul class="list-group list-group-flush">
-            {% for terms in payment_terms %}
-              <li class="list-group-item d-flex align-items-start gap-2">
-                <div class="flex-grow-1">
-                  {% include "management/includes/payment_terms_summary.html" %}
-                </div>
-                <a href="{% url 'management:estate_payment_terms_update' terms.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></a>
-                <form method="post" action="{% url 'management:estate_payment_terms_delete' terms.pk %}" onsubmit="return confirm('Excluir esta condição de pagamento?')">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir" aria-label="Excluir"><i class="bi bi-trash"></i></button>
-                </form>
-              </li>
-            {% empty %}
-              <li class="list-group-item text-body-secondary">Nenhuma condição cadastrada.</li>
             {% endfor %}
           </ul>
         </div>

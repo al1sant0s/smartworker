@@ -447,6 +447,7 @@ class EstateFacility(models.Model):
     class Meta:
         verbose_name = "Estrutura do Empreendimento"
         verbose_name_plural = "Estruturas do Empreendimento"
+        ordering = ["facility__label"]
         unique_together = ("estate", "facility")
         constraints = [
             models.CheckConstraint(

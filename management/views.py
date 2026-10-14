@@ -7,18 +7,18 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from .forms import (
     CompanyForm,
     EstateFacilityFormSet,
     EstateForm,
     FacilityForm,
-    PaymentTermsForm,
+    PaymentTermsFormSet,
     TrackingEventForm,
 )
 from .mixins import SearchMixin, StaffRequiredMixin
-from .models import City, Company, Estate, Facility, PaymentTerms, State, TrackingEvent
+from .models import City, Company, Estate, Facility, State, TrackingEvent
 
 
 class IndexView(TemplateView):
@@ -132,10 +132,12 @@ class EstateListView(SearchMixin, ListView):
         return context
 
 
-class EstateFacilitiesMixin:
-    """Edita as estruturas (EstateFacility) junto com o formulário do empreendimento.
+class EstateFormSetsMixin:
+    """Edita as estruturas (EstateFacility) e condições de pagamento (PaymentTerms)
+    junto com o formulário do empreendimento.
 
-    O formulário e o formset são validados juntos e salvos na mesma transação.
+    O formulário e os formsets são validados juntos e salvos na mesma transação,
+    permitindo cadastrá-los já na criação do empreendimento.
     """
 
     def get_facility_formset(self):
@@ -145,11 +147,22 @@ class EstateFacilitiesMixin:
             data, instance=self.object or Estate(), prefix="facilities"
         )
 
+    def get_payment_terms_formset(self):
+        data = self.request.POST if self.request.method == "POST" else None
+        return PaymentTermsFormSet(
+            data, instance=self.object or Estate(), prefix="payment_terms"
+        )
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object() if "pk" in kwargs else None
         form = self.get_form()
         self.facility_formset = self.get_facility_formset()
-        if form.is_valid() and self.facility_formset.is_valid():
+        self.payment_terms_formset = self.get_payment_terms_formset()
+        if (
+            form.is_valid()
+            and self.facility_formset.is_valid()
+            and self.payment_terms_formset.is_valid()
+        ):
             return self.form_valid(form)
         return self.form_invalid(form)
 
@@ -158,6 +171,8 @@ class EstateFacilitiesMixin:
             response = super().form_valid(form)
             self.facility_formset.instance = self.object
             self.facility_formset.save()
+            self.payment_terms_formset.instance = self.object
+            self.payment_terms_formset.save()
         return response
 
     def get_context_data(self, **kwargs):
@@ -165,10 +180,13 @@ class EstateFacilitiesMixin:
         context["facility_formset"] = getattr(self, "facility_formset", None) or (
             self.get_facility_formset()
         )
+        context["payment_terms_formset"] = getattr(
+            self, "payment_terms_formset", None
+        ) or (self.get_payment_terms_formset())
         return context
 
 
-class EstateCreateView(EstateFacilitiesMixin, SuccessMessageMixin, CreateView):
+class EstateCreateView(EstateFormSetsMixin, SuccessMessageMixin, CreateView):
     model = Estate
     form_class = EstateForm
     success_url = reverse_lazy("management:estate_list")
@@ -181,7 +199,7 @@ class EstateCreateView(EstateFacilitiesMixin, SuccessMessageMixin, CreateView):
         return response
 
 
-class EstateUpdateView(EstateFacilitiesMixin, SuccessMessageMixin, UpdateView):
+class EstateUpdateView(EstateFormSetsMixin, SuccessMessageMixin, UpdateView):
     model = Estate
     form_class = EstateForm
     success_url = reverse_lazy("management:estate_list")
@@ -190,7 +208,6 @@ class EstateUpdateView(EstateFacilitiesMixin, SuccessMessageMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tracking_events"] = self.object.tracking_events.select_related("created_by")
-        context["payment_terms"] = self.object.paymentterms_set.all()
         return context
 
 
@@ -225,56 +242,5 @@ class TrackingEventCreateView(SuccessMessageMixin, CreateView):
         return f"Situação de {self.estate.name} alterada para {self.object.get_status_display()}."
 
 
-# Condições de pagamento --------------------------------------------------------
-
-
-class PaymentTermsMixin(SuccessMessageMixin):
-    """Condições de pagamento ficam dentro do empreendimento e voltam para a página dele."""
-
-    model = PaymentTerms
-    form_class = PaymentTermsForm
-
-    def get_success_url(self):
-        return reverse("management:estate_update", args=[self.object.estate_id])
-
-
-class PaymentTermsCreateView(PaymentTermsMixin, CreateView):
-    success_message = "Condição de pagamento cadastrada."
-
-    def dispatch(self, request, *args, **kwargs):
-        self.estate = get_object_or_404(Estate, pk=kwargs["estate_pk"])
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["instance"] = PaymentTerms(estate=self.estate)
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["estate"] = self.estate
-        return context
-
-
-class PaymentTermsUpdateView(PaymentTermsMixin, UpdateView):
-    success_message = "Condição de pagamento atualizada."
-
-    def get_queryset(self):
-        return PaymentTerms.objects.select_related("estate")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["estate"] = self.object.estate
-        return context
-
-
-class PaymentTermsDeleteView(DeleteView):
-    model = PaymentTerms
-    http_method_names = ["post"]
-
-    def form_valid(self, form):
-        messages.success(self.request, "Condição de pagamento excluída.")
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse("management:estate_update", args=[self.object.estate_id])
+# Condições de pagamento são editadas em formset na própria página do empreendimento
+# (ver EstateFormSetsMixin).

@@ -187,3 +187,13 @@ class PaymentTermsForm(forms.ModelForm):
 
     def clean_balloon_installments(self):
         return self.cleaned_data["balloon_installments"] or 0
+
+
+# Condições de pagamento do empreendimento, editadas junto com o formulário do empreendimento
+PaymentTermsFormSet = forms.inlineformset_factory(
+    Estate,
+    PaymentTerms,
+    form=PaymentTermsForm,
+    extra=0,
+    can_delete=True,
+)

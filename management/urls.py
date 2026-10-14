@@ -21,20 +21,4 @@ urlpatterns = [
         views.TrackingEventCreateView.as_view(),
         name="estate_event_create",
     ),
-    # Nomes começam com "estate_" para o menu lateral destacar "Empreendimentos"
-    path(
-        "estate/<int:estate_pk>/payment-terms/new/",
-        views.PaymentTermsCreateView.as_view(),
-        name="estate_payment_terms_create",
-    ),
-    path(
-        "payment-terms/edit/<int:pk>/",
-        views.PaymentTermsUpdateView.as_view(),
-        name="estate_payment_terms_update",
-    ),
-    path(
-        "payment-terms/delete/<int:pk>/",
-        views.PaymentTermsDeleteView.as_view(),
-        name="estate_payment_terms_delete",
-    ),
 ]
