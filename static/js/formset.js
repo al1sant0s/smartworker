@@ -1,6 +1,7 @@
 // Adicionar e remover linhas novas em formsets do Django.
 // Marcação esperada para um formset com prefixo "facilities":
-//   <tbody id="facilities-body">              linhas (uma por formulário)
+//   <* id="facilities-body">                  container com uma linha por formulário
+//                                              (uma <tr> em tabela, ou qualquer outro elemento)
 //   <template id="facilities-empty">          formset.empty_form (com __prefix__)
 //   <button data-formset-add="facilities">    adiciona uma linha
 //   <button data-formset-remove>              (dentro da linha) remove uma linha nova
@@ -40,7 +41,10 @@
     body.addEventListener("click", (event) => {
       const remove = event.target.closest("[data-formset-remove]");
       if (!remove) return;
-      remove.closest("tr").remove();
+      // Remove o filho direto de body que contém o botão (uma <tr> ou um bloco <div>)
+      let row = remove;
+      while (row.parentElement !== body) row = row.parentElement;
+      row.remove();
       renumber(body, prefix, total);
     });
   }

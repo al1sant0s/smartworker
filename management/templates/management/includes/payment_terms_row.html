@@ -1,40 +1,33 @@
 {% load form_tags %}
-{# Uma linha do formset de condições de pagamento. Uso: include com form=<form do formset> #}
-<tr>
-  <td>
-    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-    {{ form.down_payment|bootstrap }}
-    {% for error in form.down_payment.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-  </td>
-  <td>
-    {{ form.key_payment|bootstrap }}
-    {% for error in form.key_payment.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-  </td>
-  <td>
-    {{ form.monthly_payment|bootstrap }}
-    {% for error in form.monthly_payment.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-  </td>
-  <td style="width: 6rem">
-    {{ form.monthly_installments|bootstrap }}
-    {% for error in form.monthly_installments.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-  </td>
-  <td>
-    {{ form.balloon_payment|bootstrap }}
-    {% for error in form.balloon_payment.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-  </td>
-  <td style="width: 6rem">
-    {{ form.balloon_installments|bootstrap }}
-    {% for error in form.balloon_installments.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
-  </td>
-  <td class="text-center align-middle">
-    {% if form.instance.pk %}
-      {{ form.DELETE|bootstrap }}
-    {% else %}
-      {# Linha nova: removida pelo formset.js, que renumera as demais #}
-      <button type="button" class="btn btn-sm btn-outline-secondary" data-formset-remove title="Remover linha" aria-label="Remover linha"><i class="bi bi-x-lg"></i></button>
-    {% endif %}
-  </td>
-</tr>
-{% for error in form.non_field_errors %}
-  <tr><td colspan="7"><div class="invalid-feedback d-block">{{ error }}</div></td></tr>
-{% endfor %}
+{# Um bloco do formset de condições de pagamento. Uso: include com form=<form do formset> forloop=<forloop ou vazio> #}
+<div class="border rounded p-3 mb-2">
+  {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+  <div class="d-flex align-items-center mb-2">
+    <span class="fw-semibold">Condição{% if forloop %} #{{ forloop.counter }}{% endif %}</span>
+    <div class="ms-auto">
+      {% if form.instance.pk %}
+        {{ form.DELETE|bootstrap }}
+      {% else %}
+        {# Linha nova: removida pelo formset.js, que renumera as demais #}
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-formset-remove title="Remover condição" aria-label="Remover condição"><i class="bi bi-x-lg"></i></button>
+      {% endif %}
+    </div>
+  </div>
+  {% for error in form.non_field_errors %}
+    <div class="alert alert-danger py-1 px-2">{{ error }}</div>
+  {% endfor %}
+  <div class="row">
+    <div class="col-md-4">
+      {% include "includes/form_field.html" with field=form.down_payment %}
+      {% include "includes/form_field.html" with field=form.key_payment %}
+    </div>
+    <div class="col-md-4">
+      {% include "includes/form_field.html" with field=form.monthly_payment %}
+      {% include "includes/form_field.html" with field=form.monthly_installments %}
+    </div>
+    <div class="col-md-4">
+      {% include "includes/form_field.html" with field=form.balloon_payment %}
+      {% include "includes/form_field.html" with field=form.balloon_installments %}
+    </div>
+  </div>
+</div>

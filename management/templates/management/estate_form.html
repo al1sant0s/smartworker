@@ -90,25 +90,10 @@
             {% for error in payment_terms_formset.non_form_errors %}
               <div class="alert alert-danger">{{ error }}</div>
             {% endfor %}
-            <div class="table-responsive">
-              <table class="table table-sm align-top mb-2">
-                <thead>
-                  <tr>
-                    <th>Sinal (%)</th>
-                    <th>Chaves/habite-se (%)</th>
-                    <th>Mensais (%)</th>
-                    <th>Mensais (parc.)</th>
-                    <th>Intercaladas (%)</th>
-                    <th>Intercaladas (parc.)</th>
-                    <th class="text-center">Remover</th>
-                  </tr>
-                </thead>
-                <tbody id="payment_terms-body">
-                  {% for terms_form in payment_terms_formset %}
-                    {% include "management/includes/payment_terms_row.html" with form=terms_form %}
-                  {% endfor %}
-                </tbody>
-              </table>
+            <div id="payment_terms-body">
+              {% for terms_form in payment_terms_formset %}
+                {% include "management/includes/payment_terms_row.html" with form=terms_form forloop=forloop %}
+              {% endfor %}
             </div>
             <template id="payment_terms-empty">
               {% include "management/includes/payment_terms_row.html" with form=payment_terms_formset.empty_form %}
