@@ -499,7 +499,7 @@ class PaymentTerms(models.Model):
         ],
     )
     monthly_installments = models.PositiveIntegerField(
-        default=0, verbose_name="Mensais (parcelas)"
+        default=0, verbose_name="Mensais (#)"
     )
     balloon_payment = models.DecimalField(
         verbose_name="Intercaladas (%)",
@@ -512,7 +512,7 @@ class PaymentTerms(models.Model):
         ],
     )
     balloon_installments = models.PositiveIntegerField(
-        default=0, verbose_name="Intercaladas (parcelas)"
+        default=0, verbose_name="Intercaladas (#)"
     )
 
     class Meta:
