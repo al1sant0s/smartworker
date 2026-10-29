@@ -479,7 +479,7 @@ class PaymentTerms(models.Model):
         ],
     )
     key_payment = models.DecimalField(
-        verbose_name="Chaves (%)",
+        verbose_name="Habite-se (%)",
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
