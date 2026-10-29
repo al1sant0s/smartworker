@@ -2,7 +2,12 @@ FROM mambaorg/micromamba:2-debian12-slim
 
 # Instala as dependências do conda-forge no ambiente base da imagem
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/environment.yml
-RUN micromamba install -y -n base -f /tmp/environment.yml \
+# Mais tentativas e backoff maior evitam falha de build em conexões lentas
+# ao baixar pacotes grandes (python, pandas, libopenblas, etc.)
+RUN micromamba config set remote_connect_timeout_secs 60 \
+    && micromamba config set remote_max_retries 8 \
+    && micromamba config set remote_backoff_factor 2 \
+    && micromamba install -y -n base -f /tmp/environment.yml \
     && micromamba clean --all --yes
 
 # Coloca o ambiente no PATH para que "docker compose exec web python ..." funcione

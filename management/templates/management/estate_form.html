@@ -4,9 +4,20 @@
 {% block title %}{% if object %}{{ object.name }}{% else %}Novo empreendimento{% endif %} | Smartworker{% endblock %}
 {% block page_title %}{% if object %}Editar empreendimento{% else %}Novo empreendimento{% endif %}{% endblock %}
 
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'vendor/tom-select/tom-select.bootstrap5.min.css' %}">
+{% endblock %}
+
 {% block extra_js %}
+  <script src="{% static 'vendor/tom-select/tom-select.complete.min.js' %}"></script>
   <script src="{% static 'management/js/address.js' %}"></script>
   <script src="{% static 'js/formset.js' %}"></script>
+  <script>
+    new TomSelect('#id_company', {
+      create: false,
+      placeholder: 'Buscar construtora...',
+    });
+  </script>
 {% endblock %}
 
 {% block content %}
