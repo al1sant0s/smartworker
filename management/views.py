@@ -189,8 +189,10 @@ class EstateFormSetsMixin:
 class EstateCreateView(EstateFormSetsMixin, SuccessMessageMixin, CreateView):
     model = Estate
     form_class = EstateForm
-    success_url = reverse_lazy("management:estate_list")
     success_message = "Empreendimento %(name)s cadastrado."
+
+    def get_success_url(self):
+        return reverse("management:estate_update", args=[self.object.pk])
 
     def form_valid(self, form):
         response = super().form_valid(form)
