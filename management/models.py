@@ -223,7 +223,7 @@ class City(models.Model):
 class Estate(models.Model):
     """Modelo do Empreendimento"""
 
-    name = models.CharField(max_length=64, verbose_name="Nome")
+    name = models.CharField(max_length=64, unique=True, verbose_name="Nome")
     company = models.ForeignKey(
         "Company", on_delete=models.CASCADE, verbose_name="Construtora"
     )
