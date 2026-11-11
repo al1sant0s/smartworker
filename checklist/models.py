@@ -22,13 +22,18 @@ class SourceHyperLink(models.Model):
         related_name="source_hyperlinks",
         verbose_name="Empreendimentos",
     )
-    url = models.URLField(max_length=500, unique=True, verbose_name="URL")
+    url = models.URLField(max_length=500, verbose_name="URL")
     description = models.TextField(blank=True, default="", verbose_name="Descrição")
 
     class Meta:
         verbose_name = "Link"
         verbose_name_plural = "Links"
         ordering = ["url"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["company", "url"], name="unique_hyperlink_per_company"
+            )
+        ]
 
     def __str__(self):
         return f"{self.url} ({self.description})" if self.description else self.url
@@ -42,13 +47,18 @@ class SourceEmail(models.Model):
     estates = models.ManyToManyField(
         Estate, blank=True, related_name="source_emails", verbose_name="Empreendimentos"
     )
-    email = models.EmailField(unique=True, verbose_name="Email")
+    email = models.EmailField(verbose_name="Email")
     description = models.TextField(blank=True, default="", verbose_name="Descrição")
 
     class Meta:
         verbose_name = "Email para contato"
         verbose_name_plural = "Emails para contato"
         ordering = ["email"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["company", "email"], name="unique_email_per_company"
+            )
+        ]
 
     def __str__(self):
         return f"{self.email} ({self.description})" if self.description else self.email
@@ -62,13 +72,18 @@ class SourcePhone(models.Model):
     estates = models.ManyToManyField(
         Estate, blank=True, related_name="source_phones", verbose_name="Empreendimentos"
     )
-    phone = PhoneNumberField(unique=True, region="BR", verbose_name="Telefone")
+    phone = PhoneNumberField(region="BR", verbose_name="Telefone")
     description = models.TextField(blank=True, default="", verbose_name="Descrição")
 
     class Meta:
         verbose_name = "Telefone para contato"
         verbose_name_plural = "Telefones para contato"
         ordering = ["phone"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["company", "phone"], name="unique_phone_per_company"
+            )
+        ]
 
     def __str__(self):
         phone = self.phone.as_national
