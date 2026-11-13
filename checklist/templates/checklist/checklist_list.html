@@ -46,7 +46,7 @@
         {% for value, label, count in status_tabs %}
           <li class="nav-item">
             <a class="nav-link{% if status == value %} active{% endif %}" href="{% querystring status=value page=None %}">
-              {{ label }} <span class="badge text-bg-light">{{ count }}</span>
+              {{ label }} <span class="badge text-bg-light">{{ count }} ({% widthratio count counts.total 100 %}%)</span>
             </a>
           </li>
         {% endfor %}
