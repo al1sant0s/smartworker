@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 from django.conf import settings
@@ -218,6 +219,17 @@ class AvailabilitySheet(models.Model):
                 raise ValidationError({"file": "O arquivo não é uma imagem válida."})
             finally:
                 self.file.seek(0)
+
+    def content_hash(self):
+        """SHA-256 do conteúdo do arquivo, ou None se o arquivo não puder ser lido."""
+        digest = hashlib.sha256()
+        try:
+            with self.file.storage.open(self.file.name, "rb") as stored:
+                for chunk in stored.chunks():
+                    digest.update(chunk)
+        except OSError:
+            return None
+        return digest.hexdigest()
 
     @property
     def extension(self):

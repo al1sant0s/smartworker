@@ -1,3 +1,4 @@
+import hashlib
 from datetime import date, timedelta
 
 from django.contrib import messages
@@ -288,12 +289,28 @@ class CheckListDetailView(SuccessMessageMixin, UpdateView):
             request.POST, request.FILES, instance=AvailabilitySheet(checklist=self.object)
         )
         if form.is_valid():
+            duplicates = self.identical_sheets(form.cleaned_data["file"])
             sheet = form.save()
             messages.success(request, f"Arquivo {sheet} enviado.")
+            if duplicates:
+                names = ", ".join(str(duplicate) for duplicate in duplicates)
+                messages.warning(
+                    request,
+                    f"O arquivo enviado é idêntico a um arquivo já existente neste checklist: {names}.",
+                )
             return redirect(self.object_url(self.object))
         return self.render_to_response(
             self.get_context_data(form=self.get_form_class()(instance=self.object), sheet_form=form)
         )
+
+    def identical_sheets(self, uploaded):
+        """Arquivos já enviados a este checklist com o mesmo conteúdo do enviado."""
+        digest = hashlib.sha256()
+        for chunk in uploaded.chunks():
+            digest.update(chunk)
+        uploaded.seek(0)
+        target = digest.hexdigest()
+        return [sheet for sheet in self.object.sheets.all() if sheet.content_hash() == target]
 
     def form_valid(self, form):
         form.instance.checked_by = self.request.user
