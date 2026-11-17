@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 from PIL import Image
@@ -178,10 +179,13 @@ IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif"]
 
 
 def availability_sheet_path(instance, filename):
-    # Ex: checklists/12/2026-10/tabela-precos.pdf
+    # Ex: checklists/12/2026-10/gold_park_residence.pdf
     checklist = instance.checklist
+    extension = Path(filename).suffix.lower()
+    name = slugify(checklist.estate.name).replace("-", "_") or "arquivo"
     return (
-        f"checklists/{checklist.estate_id}/{checklist.reference_month:%Y-%m}/{filename}"
+        f"checklists/{checklist.estate_id}/{checklist.reference_month:%Y-%m}/"
+        f"{name}{extension}"
     )
 
 
