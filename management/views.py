@@ -111,8 +111,7 @@ class FacilityUpdateView(StaffRequiredMixin, SuccessMessageMixin, UpdateView):
 class EstateListView(SearchMixin, ListView):
     model = Estate
     paginate_by = 25
-    search_fields = ["name", "company__name", "street", "district", "city__name", "city__state"]
-    digit_search_fields = ["cep"]
+    search_fields = ["name", "company__name"]
 
     def get_queryset(self):
         # Situação atual = status do evento mais recente de cada empreendimento
