@@ -16,7 +16,7 @@ from .models import (
 class CompanyForm(forms.ModelForm):
     class Meta:
         model = Company
-        # CNPJ primeiro: ao ser preenchido, busca os demais dados na BrasilAPI
+        # CNPJ primeiro: ao ser preenchido, busca os demais dados na Minha Receita
         fields = ["cnpj", "name", "email", "phone"]
         widgets = {
             "cnpj": forms.TextInput(

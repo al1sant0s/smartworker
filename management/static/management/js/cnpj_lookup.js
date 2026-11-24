@@ -1,11 +1,11 @@
-// Busca os dados da construtora na BrasilAPI ao preencher o CNPJ.
+// Busca os dados da construtora na Minha Receita ao preencher o CNPJ.
 // Marcação esperada: <input name="cnpj" data-cnpj-lookup> no mesmo <form> que
 // os campos name, email e phone. Só preenche campos vazios, para não
 // sobrescrever o que o usuário digitou. Se a API falhar, o formulário segue normal.
 (() => {
   "use strict";
 
-  const API_URL = "https://brasilapi.com.br/api/cnpj/v1/";
+  const API_URL = "https://minhareceita.org/";
   const NAME_MAX_LENGTH = 150;
 
   // "1123851939" -> "(11) 2385-1939"; "11912345678" -> "(11) 91234-5678"
